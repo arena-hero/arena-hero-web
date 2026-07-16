@@ -1,5 +1,5 @@
 import type { CommandPlan, Direction, PlayerState, Position, WorldObject } from './types'
-import { MAX_UNITS_PER_CELL } from './gameRules'
+import { MAX_ENTITIES_PER_CELL } from './gameRules'
 import { positionKey } from './visibility'
 
 const steps: { direction: Direction; dx: number; dy: number }[] = [
@@ -13,17 +13,18 @@ export function moveTargets(state: PlayerState, selected: WorldObject, plan?: Co
   return steps.map(({ dx, dy }) => [selected.position![0] + dx, selected.position![1] + dy] as Position).filter((target) => {
     const key = positionKey(target)
     if (obstacles.has(key)) return false
-    if (selected.kind !== 'CORE') return projectedUnitCount(state, target, plan, selected.id) < MAX_UNITS_PER_CELL
+    if (selected.kind !== 'CORE') return projectedEntityCount(state, target, plan, selected.id) < MAX_ENTITIES_PER_CELL
     if (resources.has(key)) return false
-    return !state.objects.some((object) => object.position?.[0] === target[0] && object.position?.[1] === target[1] && (object.kind === 'CORE' || object.controlled === false))
+    if (state.objects.some((object) => object.position?.[0] === target[0] && object.position?.[1] === target[1] && (object.kind === 'CORE' || object.controlled === false))) return false
+    return projectedEntityCount(state, target, plan, selected.id) < MAX_ENTITIES_PER_CELL
   })
 }
 
-export function projectedUnitCount(state: PlayerState, position: Position, plan?: CommandPlan, excludedUnitId?: string) {
-  let count = state.objects.filter((object) => object.kind === 'UNIT' && object.position?.[0] === position[0] && object.position?.[1] === position[1]).length
+export function projectedEntityCount(state: PlayerState, position: Position, plan?: CommandPlan, excludedEntityId?: string) {
+  let count = state.objects.filter((object) => (object.kind === 'UNIT' || object.kind === 'CORE') && object.id !== excludedEntityId && object.position?.[0] === position[0] && object.position?.[1] === position[1]).length
   if (!plan) return count
   for (const object of state.objects) {
-    if (object.kind !== 'UNIT' || !object.controlled || !object.id || object.id === excludedUnitId || !object.position) continue
+    if (object.kind !== 'UNIT' || !object.controlled || !object.id || object.id === excludedEntityId || !object.position) continue
     const action = plan.unit_actions[object.id]
     if (action?.type !== 'MOVE' || !action.direction) continue
     const step = steps.find((candidate) => candidate.direction === action.direction)

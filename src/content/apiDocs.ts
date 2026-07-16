@@ -106,13 +106,15 @@ const enApi: ApiDocsContent = {
       bullets: [
         'tick announces that a new logical Tick has begun. Commands are still closed.',
         'state contains the complete PlayerStateView and is the only cue to send commands. Requests may wait until every player has received state and the shared 15-second window opens.',
+        'PlayerStateView includes status. While status is RESPAWNING, respawn_at_tick identifies the deterministic redeployment Tick.',
+        'CORE_DESTROYED is private to the victim. For attack destruction, values.destroyed_by lists every attacker username from that Tick; ordinary enemy objects still expose no owner identity.',
         'received confirms each newly persisted plan. Replacing a plan emits another received event.',
         'A : heartbeat comment may be sent every 15 seconds. There are no event IDs, event history, or Last-Event-ID replay.',
         'During reconnect, the server restores the current authoritative Tick phase; reconnecting never extends the command window.',
       ],
       codeBlocks: [{
         label: 'SSE sequence', language: 'text',
-        code: 'event: tick\ndata: 10583\n\nevent: state\ndata: {"resources":42,"population":4,"population_tier":0,"upkeep_next_tick":0,"objects":[],"events":[]}\n\nevent: received\ndata: {"tick":10583,"source":"AGENT","received_at":"2026-07-15T12:00:06.241Z"}\n\n: heartbeat',
+        code: 'event: tick\ndata: 10583\n\nevent: state\ndata: {"status":"ACTIVE","resources":42,"population":4,"population_tier":0,"upkeep_next_tick":0,"objects":[],"events":[]}\n\nevent: received\ndata: {"tick":10583,"source":"AGENT","received_at":"2026-07-15T12:00:06.241Z"}\n\n: heartbeat',
       }],
     },
     {
@@ -125,7 +127,7 @@ const enApi: ApiDocsContent = {
         'The latest complete accepted plan for each (player, tick, source) wins. A POST replaces the previous source plan; plans are not merged.',
         'HTTP 202 means the plan was durably accepted, not that its dynamic actions will succeed during resolution.',
         'Common errors: COMMAND_SUPERSEDED, COMMAND_WINDOW_CLOSED, TICK_NOT_READY, TICK_MISMATCH, INVALID_COMMAND, IDEMPOTENCY_CONFLICT, UNAUTHORIZED.',
-        'Dynamic failures appear in the next state.events. Cell-capacity failures use CELL_UNIT_LIMIT; Ranger dynamic shot failures use the non-revealing SHOT_MISSED code.',
+        'Dynamic failures appear in the next state.events. A cell holds at most 2 occupying entities including Core; capacity failures use CELL_UNIT_LIMIT. Ranger dynamic shot failures use the non-revealing SHOT_MISSED code.',
       ],
       codeBlocks: [
         {
@@ -166,13 +168,15 @@ const zhApi: ApiDocsContent = {
       bullets: [
         'tick 宣布新的逻辑 Tick 已开始，但此时指令仍然关闭。',
         'state 包含完整 PlayerStateView，是唯一行动触发器。请求可以等待，直到所有玩家收到 state 后统一开放 15 秒窗口。',
+        'PlayerStateView 包含 status。重生期间 status 为 RESPAWNING，respawn_at_tick 标记确定的重新部署 Tick。',
+        'CORE_DESTROYED 仅对受害者可见。攻击摧毁时，values.destroyed_by 会列出本 Tick 的全部攻击者 username；普通敌方对象仍不暴露 owner 身份。',
         'received 确认一份新计划已经持久化。每次成功替换计划都会再次发送 received。',
         '服务端可以每 15 秒发送 : heartbeat 注释。SSE 没有事件 ID、历史或 Last-Event-ID 重放。',
         '重连会恢复当前权威 Tick 阶段；重连永远不会延长指令窗口。',
       ],
       codeBlocks: [{
         label: 'SSE 顺序', language: 'text',
-        code: 'event: tick\ndata: 10583\n\nevent: state\ndata: {"resources":42,"population":4,"population_tier":0,"upkeep_next_tick":0,"objects":[],"events":[]}\n\nevent: received\ndata: {"tick":10583,"source":"AGENT","received_at":"2026-07-15T12:00:06.241Z"}\n\n: heartbeat',
+        code: 'event: tick\ndata: 10583\n\nevent: state\ndata: {"status":"ACTIVE","resources":42,"population":4,"population_tier":0,"upkeep_next_tick":0,"objects":[],"events":[]}\n\nevent: received\ndata: {"tick":10583,"source":"AGENT","received_at":"2026-07-15T12:00:06.241Z"}\n\n: heartbeat',
       }],
     },
     {
@@ -185,7 +189,7 @@ const zhApi: ApiDocsContent = {
         '每个 (player, tick, source) 最后被接受的完整计划获胜。POST 会完整替换同来源旧计划，不会合并。',
         'HTTP 202 只表示计划已持久化，不代表其中的动态行动一定会在结算时成功。',
         '常见错误：COMMAND_SUPERSEDED、COMMAND_WINDOW_CLOSED、TICK_NOT_READY、TICK_MISMATCH、INVALID_COMMAND、IDEMPOTENCY_CONFLICT、UNAUTHORIZED。',
-        '动态失败通过下一次 state.events 返回。格子容量失败使用 CELL_UNIT_LIMIT；Ranger 动态射击失败统一使用不泄密的 SHOT_MISSED。',
+        '动态失败通过下一次 state.events 返回。每格最多 2 个可占位实体，Core 也计入；格子容量失败使用 CELL_UNIT_LIMIT。Ranger 动态射击失败统一使用不泄密的 SHOT_MISSED。',
       ],
       codeBlocks: [
         {

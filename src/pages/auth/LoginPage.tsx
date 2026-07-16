@@ -20,7 +20,7 @@ export function LoginPage() {
     </form>
     <div className="my-5 flex items-center gap-3 text-[10px] font-mono text-zinc-600"><span className="h-px flex-1 bg-white/10" />OR<span className="h-px flex-1 bg-white/10" /></div>
     <a href="/api/v1/auth/github/start" className="secondary-button flex w-full items-center justify-center gap-2"><span className="font-display text-base" aria-hidden="true">GH</span>{t('auth.github')}</a>
-    <p className="mt-6 text-center text-sm text-zinc-500">{t('auth.noAccount')} <Link to="/register" className="focus-ring rounded-gold-sm font-medium text-cyan-signal hover:text-cyan-200">{t('auth.register')}</Link></p>
-    {import.meta.env.DEV && <Link to="/demo" className="mt-4 block text-center font-mono text-[10px] tracking-wider text-violet-cosmic hover:text-violet-300">{t('common.demo')} →</Link>}
+    <p className="mt-6 text-center text-sm text-zinc-500">{t('auth.noAccount')} <Link to="/register" className="focus-ring rounded-gold-sm font-medium text-cyan-signal hover:text-blue-soft">{t('auth.register')}</Link></p>
+    {import.meta.env.DEV && <Link to="/demo" className="mt-4 block text-center font-mono text-[10px] tracking-wider text-violet-cosmic hover:text-blue-soft">{t('common.demo')} →</Link>}
   </AuthCard>
 }

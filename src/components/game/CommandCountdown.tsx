@@ -33,11 +33,11 @@ export function CommandCountdown({ phase, startedAt }: { phase: StreamPhase; sta
   >
     <div className="mb-1.5 flex items-center justify-between font-mono text-[9px] tracking-[.12em]">
       <span className="text-zinc-500">{t('game.commandWindow')}</span>
-      <span className={urgent ? 'text-coral-hostile' : 'text-green-resource'}>{remaining}s</span>
+      <span className={urgent ? 'text-coral-hostile' : 'text-blue-soft'}>{remaining}s</span>
     </div>
     <div className="h-1 overflow-hidden rounded-full bg-white/[.07]">
       <div
-        className={`h-full origin-left rounded-full transition-transform duration-100 ease-linear ${urgent ? 'bg-coral-hostile shadow-[0_0_10px_rgba(255,107,125,.7)]' : 'bg-green-resource shadow-[0_0_10px_rgba(109,255,114,.6)]'}`}
+        className={`h-full origin-left rounded-full transition-transform duration-100 ease-linear ${urgent ? 'bg-coral-hostile shadow-[0_0_8px_rgba(198,99,112,.35)]' : 'bg-cyan-signal shadow-[0_0_8px_rgba(69,145,197,.35)]'}`}
         style={{ transform: `scaleX(${progress})` }}
       />
     </div>

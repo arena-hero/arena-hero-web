@@ -56,18 +56,18 @@ const en: RulesContent = {
         { name: 'Core', stats: ['HP 20', 'SHIELD 20', 'VISION 5'], actions: 'SPAWN · REPAIR · MIGRATE', description: 'Stores resources. Worker costs 5, Vanguard 10, Ranger 12. Migration takes 4 Ticks.' },
         { name: 'Worker', stats: ['HP 2', 'VISION 3', 'CARGO 1', 'COST 5'], actions: 'MOVE · HARVEST · DEPOSIT', description: 'Collects one resource and carries it back to the Core.' },
         { name: 'Vanguard', stats: ['HP 4', 'VISION 4', 'DAMAGE 1', 'COST 10'], actions: 'MOVE · SWEEP', description: 'Hits every enemy in one adjacent orthogonal cell.' },
-        { name: 'Ranger', stats: ['HP 2', 'VISION 5', 'RANGE 2–3', 'COST 12'], actions: 'MOVE · SHOOT', description: 'Shoots one target in a straight line. Anything in between blocks the shot.' },
+        { name: 'Ranger', stats: ['HP 2', 'VISION 5', 'RANGE 1–3', 'COST 12'], actions: 'MOVE · SHOOT', description: 'Shoots one target in a straight line, including an adjacent target. Anything in between blocks the shot.' },
       ],
     },
     {
       id: 'movement', number: '04', title: 'Movement and cell capacity',
       summary: 'Units move one orthogonal cell per Tick.',
       bullets: [
-        'A cell holds at most 2 Units. A Core does not consume a Unit slot.',
+        'A cell holds at most 2 occupying entities. Core, Worker, Vanguard, and Ranger all count.',
         'Different players can never share a cell. If they contest one destination, every contender fails.',
         'The server resolves movement chains simultaneously, so successful departures free space during the same Tick.',
       ],
-      callout: { label: 'HARD LIMIT', text: 'At most 2 Units per cell, regardless of Unit type.' },
+      callout: { label: 'HARD LIMIT', text: 'At most 2 occupying entities per cell, including the Core.' },
     },
     {
       id: 'resources', number: '05', title: 'Resources and upkeep',
@@ -84,6 +84,7 @@ const en: RulesContent = {
       bullets: [
         'A Unit killed this Tick still completes its locked attack. Mutual destruction is possible.',
         'When a Core dies, its inventory and all Units disappear. It respawns after 20 Ticks with 20 resources and one Worker.',
+        'The victim privately sees the usernames of every player who damaged the destroyed Core that Tick; there is no fabricated last hit.',
         'Manual explicit actions override Agent actions for the same object. Objects omitted by Manual fall back to the Agent; otherwise they WAIT.',
       ],
     },
@@ -125,18 +126,18 @@ const zh: RulesContent = {
         { name: 'Core', stats: ['HP 20', '护盾 20', '视野 5'], actions: '生产 · 修盾 · 迁移', description: '保存资源。Worker 5、Vanguard 10、Ranger 12；迁移一格需要 4 Tick。' },
         { name: 'Worker', stats: ['HP 2', '视野 3', '携带 1', '价格 5'], actions: '移动 · 采集 · 交付', description: '采集一份资源并运回 Core。' },
         { name: 'Vanguard', stats: ['HP 4', '视野 4', '伤害 1', '价格 10'], actions: '移动 · 横扫', description: '攻击一个相邻格中的全部敌人。' },
-        { name: 'Ranger', stats: ['HP 2', '视野 5', '射程 2–3', '价格 12'], actions: '移动 · 射击', description: '直线射击一个目标，中间的任何对象都会挡住箭矢。' },
+        { name: 'Ranger', stats: ['HP 2', '视野 5', '射程 1–3', '价格 12'], actions: '移动 · 射击', description: '直线射击一个目标，包括相邻目标；中间的任何对象都会挡住箭矢。' },
       ],
     },
     {
       id: 'movement', number: '04', title: '移动与格子容量',
       summary: 'Unit 每 Tick 最多上下左右移动一格。',
       bullets: [
-        '每格最多容纳 2 个 Unit，Core 不占 Unit 名额。',
+        '每格最多容纳 2 个可占位实体，Core 和所有 Unit 都计入。',
         '不同玩家永远不能同格；争夺同一目标格时，所有争夺者全部失败。',
         '全服移动同时结算，成功离开的 Unit 会在同一 Tick 释放位置。',
       ],
-      callout: { label: '硬性上限', text: '每格最多 2 个 Unit，不区分类型。' },
+      callout: { label: '硬性上限', text: '每格最多 2 个可占位实体，包含 Core。' },
     },
     {
       id: 'resources', number: '05', title: '资源与维护费',
@@ -153,6 +154,7 @@ const zh: RulesContent = {
       bullets: [
         '本 Tick 被杀的 Unit 仍会完成已锁定攻击，因此可以同归于尽。',
         'Core 被摧毁后，库存和全部 Unit 消失；20 Tick 后带 20 资源和一个 Worker 重生。',
+        '受害者会私下看到本 Tick 参与摧毁 Core 的全部玩家 username；系统不会虚构最后一击。',
         'Manual 明确动作覆盖同一对象的 Agent 动作；Manual 未列出的对象回退 Agent，否则 WAIT。',
       ],
     },

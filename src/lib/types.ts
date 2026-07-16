@@ -36,6 +36,8 @@ export interface GameEvent {
 }
 
 export interface PlayerState {
+  status: 'ACTIVE' | 'RESPAWNING'
+  respawn_at_tick?: number
   resources: number
   population: number
   population_tier: number

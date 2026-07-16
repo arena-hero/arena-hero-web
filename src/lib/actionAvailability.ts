@@ -1,7 +1,7 @@
 import type { CommandPlan, CoreActionType, PlayerState, UnitActionType, UnitType, WorldObject } from './types'
 import { rangerTargets } from './combatPreview'
-import { MAX_UNITS_PER_CELL } from './gameRules'
-import { moveTargets, projectedUnitCount } from './movementPreview'
+import { MAX_ENTITIES_PER_CELL } from './gameRules'
+import { moveTargets, projectedEntityCount } from './movementPreview'
 
 export type AvailableAction = UnitActionType | CoreActionType
 
@@ -19,7 +19,7 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
 
   if (selected.kind === 'CORE') {
     const normal = selected.state !== 'MOVING'
-    const hasSpawnCapacity = projectedUnitCount(state, selected.position, plan) < MAX_UNITS_PER_CELL
+    const hasSpawnCapacity = projectedEntityCount(state, selected.position, plan) < MAX_ENTITIES_PER_CELL
     return {
       actions: {
         REPAIR_SHIELD: normal && state.resources >= 1 && (selected.shield ?? 0) < CORE_MAX_SHIELD,

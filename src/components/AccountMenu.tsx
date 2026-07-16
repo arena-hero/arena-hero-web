@@ -43,15 +43,15 @@ export function AccountMenu() {
 
   return <div ref={menuRef} className="relative">
     <button ref={triggerRef} onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-haspopup="menu" aria-label={t('common.account')} className="panel focus-ring flex min-h-11 max-w-48 items-center gap-2 rounded-gold px-2.5 shadow-lg shadow-black/30 hover:bg-space-800">
-      <span className="grid size-8 place-items-center rounded-gold-sm bg-cyan-signal/10 font-display text-xs text-cyan-signal">{user?.username.slice(0, 2).toUpperCase()}</span>
+      <span className="grid size-8 place-items-center rounded-gold-sm border border-violet-cosmic/15 bg-indigo-deep/70 font-display text-xs text-blue-soft">{user?.username.slice(0, 2).toUpperCase()}</span>
       <span className="max-w-28 truncate text-sm font-medium text-zinc-200">{user?.username}</span>
       <ChevronDown size={14} className={`text-zinc-600 transition-transform ${open ? 'rotate-180' : ''}`} />
     </button>
     {open && <div role="menu" className="panel absolute right-0 top-14 z-50 w-64 rounded-gold-lg p-2 shadow-2xl shadow-black/50">
       <div className="border-b border-white/[.07] px-3 pb-3 pt-2"><p className="text-sm font-medium text-zinc-200">{user?.username}</p><p className="mt-1 truncate text-[10px] text-zinc-600">{user?.email}</p></div>
       <nav aria-label="Account navigation" className="mt-1">
-        <NavLink role="menuitem" to="/arena" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-cyan-signal/10 text-cyan-signal' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><Gamepad2 size={16} />{t('nav.arena')}</NavLink>
-        <NavLink role="menuitem" to="/docs" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-cyan-signal/10 text-cyan-signal' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><BookOpen size={16} />{t('nav.docs')}</NavLink>
+        <NavLink role="menuitem" to="/arena" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><Gamepad2 size={16} />{t('nav.arena')}</NavLink>
+        <NavLink role="menuitem" to="/docs" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><BookOpen size={16} />{t('nav.docs')}</NavLink>
         {dialogItems.map(({ id, label, icon: Icon }) => <button role="menuitem" key={id} type="button" onClick={() => showDialog(id)} className="flex min-h-11 w-full items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><Icon size={16} />{label}</button>)}
       </nav>
       <LanguageToggle className="w-full" />

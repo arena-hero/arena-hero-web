@@ -3,6 +3,7 @@ import { buildEntityMotions, collectEntityPositions, continueOrStartMotionAnimat
 import type { PlayerState } from './types'
 
 const state = (position: [number, number]): PlayerState => ({
+  status: 'ACTIVE',
   resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, events: [],
   objects: [{ kind: 'UNIT', id: 'unit', controlled: true, position, hp: 2, unit_type: 'WORKER', cargo: 0 }],
 })

@@ -1,10 +1,10 @@
-import { Activity, Crosshair, Move, Sword } from 'lucide-react'
+import { Crosshair, Move, Sword } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { AssetList } from '../components/game/AssetList'
 import { GameHUD } from '../components/game/GameHUD'
 import { MapControls } from '../components/game/MapControls'
-import { StatusPanel } from '../components/game/StatusPanel'
+import { RespawnOverlay } from '../components/game/RespawnOverlay'
 import { WorldCanvas } from '../components/game/WorldCanvas'
 import { UnitActionDialog, type MapAnchor } from '../components/game/UnitActionDialog'
 import { useGameStream } from '../hooks/useGameStream'
@@ -13,17 +13,29 @@ import { plannedShotMarkers, plannedSweepMarkers, rangerTargets } from '../lib/c
 import { directionTo, moveTargets, plannedMoveArrows } from '../lib/movementPreview'
 import { getErrorMessage } from '../lib/errorMessage'
 import { getActionAvailability } from '../lib/actionAvailability'
+import { coreDestroyerFromEvents } from '../lib/destruction'
 import type { CommandPlan, CoreAction, Position, UnitAction, WorldObject } from '../lib/types'
 
 export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const { t } = useTranslation(); const { user } = useAuth(); const game = useGameStream(demo, demo ? 'demo' : user?.username ?? 'anonymous')
   const submitGamePlan = game.submit
-  const [selectedId, setSelectedId] = useState<string | null>(null); const [targetMode, setTargetMode] = useState<'SHOOT' | 'SWEEP' | null>(null); const [moveSelecting, setMoveSelecting] = useState(false); const [mobileOpen, setMobileOpen] = useState(false)
+  const [selectedId, setSelectedId] = useState<string | null>(null); const [targetMode, setTargetMode] = useState<'SHOOT' | 'SWEEP' | null>(null); const [moveSelecting, setMoveSelecting] = useState(false)
   const [anchor, setAnchor] = useState<MapAnchor | null>(null)
+  const destroyerStorageKey = `arena-hero.core-destroyer.${demo ? 'demo' : user?.username ?? 'anonymous'}`
+  const [coreDestroyer, setCoreDestroyer] = useState<string | null>(() => sessionStorage.getItem(destroyerStorageKey))
   const [centerRequest, setCenterRequest] = useState(0); const [zoomRequest, setZoomRequest] = useState(0)
   const [plan, setPlan] = useState<CommandPlan>({ tick: game.tick ?? 0, unit_actions: {} })
   const planRef = useRef(plan); const tickRef = useRef(game.tick); const submitQueueRef = useRef<Promise<void>>(Promise.resolve())
+  const respawning = game.state?.status === 'RESPAWNING'
+  const respawnTicksRemaining = Math.max(0, (game.state?.respawn_at_tick ?? game.tick ?? 0) - (game.tick ?? 0))
   useEffect(() => { if (game.tick) { const nextPlan = { tick: game.tick, unit_actions: {} }; tickRef.current = game.tick; planRef.current = nextPlan; setPlan(nextPlan); setTargetMode(null); setMoveSelecting(false) } }, [game.tick])
+  useEffect(() => { if (respawning) { setSelectedId(null); setTargetMode(null); setMoveSelecting(false); setAnchor(null) } }, [respawning])
+  useEffect(() => {
+    if (!game.state) return
+    if (!respawning) { setCoreDestroyer(null); sessionStorage.removeItem(destroyerStorageKey); return }
+    const destroyer = coreDestroyerFromEvents(game.state.events)
+    if (destroyer) { setCoreDestroyer(destroyer); sessionStorage.setItem(destroyerStorageKey, destroyer) }
+  }, [destroyerStorageKey, game.state, respawning])
   const commitManualPlan = useCallback((nextPlan: CommandPlan) => {
     planRef.current = nextPlan; setPlan(nextPlan)
     submitQueueRef.current = submitQueueRef.current.then(async () => {
@@ -62,18 +74,18 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     else unitAction(selected.id, { type: 'MOVE', direction })
     select(null)
   }
-  if (!game.state) return <div className="grid h-dvh place-items-center"><div className="text-center"><div className="mx-auto mb-4 size-2 animate-pulse rounded-full bg-cyan-signal shadow-[0_0_18px_#54e7ff]" /><p className="font-mono text-xs tracking-[.2em] text-zinc-500">{t(`game.${game.phase}`)}</p>{game.error && <p role="alert" className="mt-3 text-xs text-coral-hostile">{getErrorMessage(game.error)}</p>}</div></div>
-  return <div className="grid h-dvh min-h-[560px] grid-cols-1 overflow-hidden lg:grid-cols-[260px_1fr] xl:grid-cols-[260px_1fr_340px]">
-    <AssetList objects={game.state.objects} selectedId={selectedId} onSelect={select} />
+  if (!game.state) return <div className="grid h-dvh place-items-center"><div className="text-center"><div className="mx-auto mb-4 size-2 animate-pulse rounded-full bg-cyan-signal shadow-[0_0_14px_rgba(69,145,197,.45)]" /><p className="font-mono text-xs tracking-[.2em] text-zinc-500">{t(`game.${game.phase}`)}</p>{game.error && <p role="alert" className="mt-3 text-xs text-coral-hostile">{getErrorMessage(game.error)}</p>}</div></div>
+  return <div className="grid h-dvh min-h-[560px] grid-cols-1 overflow-hidden lg:grid-cols-[260px_1fr]">
+    <AssetList state={game.state} objects={game.state.objects} selectedId={selectedId} onSelect={select} />
     <section className="relative min-h-0 overflow-hidden">
-      <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />
+      {!respawning && <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />}
       <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} targetableIds={targetableIds} moveTargets={availableMoveTargets} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onMoveTarget={chooseMoveTarget} onAnchorChange={setAnchor} />
-      {selected?.controlled && anchor && actionAvailability && !targetMode && !moveSelecting && <UnitActionDialog anchor={anchor} selected={selected} plan={plan} phase={game.phase} resources={game.state.resources} availability={actionAvailability} onClose={() => select(null)} onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }} onSweepTargeting={() => { setMoveSelecting(false); setTargetMode('SWEEP') }} onMoveTargeting={() => { setTargetMode(null); setMoveSelecting(true) }} onUnitAction={unitAction} onCoreAction={coreAction} />}
+      {respawning && <RespawnOverlay remainingTicks={respawnTicksRemaining} destroyedBy={coreDestroyer} />}
+      {!respawning && selected?.controlled && anchor && actionAvailability && !targetMode && !moveSelecting && <UnitActionDialog anchor={anchor} selected={selected} plan={plan} phase={game.phase} resources={game.state.resources} availability={actionAvailability} onClose={() => select(null)} onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }} onSweepTargeting={() => { setMoveSelecting(false); setTargetMode('SWEEP') }} onMoveTargeting={() => { setTargetMode(null); setMoveSelecting(true) }} onUnitAction={unitAction} onCoreAction={coreAction} />}
       {targetMode && <div className="panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs text-coral-hostile">{targetMode === 'SWEEP' ? <Sword size={15} /> : <Crosshair size={15} />}<span>{t(targetMode === 'SWEEP' ? 'game.sweepHint' : 'game.targetHint')}</span><button onClick={() => setTargetMode(null)} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}
       {moveSelecting && <div className="panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs text-cyan-signal"><Move size={15} /><span>{t('game.moveHint')}</span><button onClick={() => setMoveSelecting(false)} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}
-      <MapControls onCenter={() => setCenterRequest((value) => value + 1)} onZoom={(direction) => setZoomRequest((value) => direction * (Math.abs(value) + 1))} />
-      <button onClick={() => setMobileOpen(true)} className="primary-button absolute bottom-4 right-4 z-20 flex items-center gap-2 xl:hidden"><Activity size={16} />{t('game.status')}</button>
+      {!respawning && <MapControls onCenter={() => setCenterRequest((value) => value + 1)} onZoom={(direction) => setZoomRequest((value) => direction * (Math.abs(value) + 1))} />}
+      {game.error && <div role="alert" className="panel absolute bottom-4 right-4 z-30 max-w-[min(24rem,calc(100%-2rem))] px-4 py-3 text-xs leading-5 text-coral-hostile">{getErrorMessage(game.error)}</div>}
     </section>
-    <StatusPanel mobileOpen={mobileOpen} state={game.state} tick={game.tick} events={game.state.events} error={game.error} onCloseMobile={() => setMobileOpen(false)} />
   </div>
 }

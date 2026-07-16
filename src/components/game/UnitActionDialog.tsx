@@ -63,6 +63,6 @@ export function UnitActionDialog(props: Props) {
         </button>
       })}</div>
     </section>}
-    {currentAction && <div className="mt-3 flex min-h-11 items-center justify-between rounded-gold bg-cyan-signal/5 pl-3 font-mono text-[10px] text-cyan-signal"><span>{currentAction.type}{'direction' in currentAction && currentAction.direction ? ` · ${currentAction.direction}` : ''}{'unit_type' in currentAction && currentAction.unit_type ? ` · ${currentAction.unit_type}` : ''}</span><button onClick={clear} className="focus-ring grid size-11 place-items-center rounded-gold-sm hover:bg-white/5" aria-label={t('game.clear')}><Trash2 size={14} /></button></div>}
+    {currentAction && <div className="mt-3 flex min-h-11 items-center justify-between rounded-gold border border-violet-cosmic/10 bg-indigo-deep/35 pl-3 font-mono text-[10px] text-blue-soft"><span>{currentAction.type}{'direction' in currentAction && currentAction.direction ? ` · ${currentAction.direction}` : ''}{'unit_type' in currentAction && currentAction.unit_type ? ` · ${currentAction.unit_type}` : ''}</span><button onClick={clear} className="focus-ring grid size-11 place-items-center rounded-gold-sm hover:bg-white/5" aria-label={t('game.clear')}><Trash2 size={14} /></button></div>}
   </div>
 }

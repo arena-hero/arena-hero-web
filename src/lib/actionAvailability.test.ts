@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { PlayerState, WorldObject } from './types'
 import { getActionAvailability } from './actionAvailability'
 
-const state = (objects: WorldObject[], resources = 0): PlayerState => ({ resources, population: 0, population_tier: 0, upkeep_next_tick: 0, objects, events: [] })
+const state = (objects: WorldObject[], resources = 0): PlayerState => ({ status: 'ACTIVE', resources, population: 0, population_tier: 0, upkeep_next_tick: 0, objects, events: [] })
 
 describe('getActionAvailability', () => {
   it('only lets a worker harvest while empty on a non-empty resource', () => {
@@ -38,12 +38,11 @@ describe('getActionAvailability', () => {
     expect(funded.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
   })
 
-  it('disables production when the core cell already has two units', () => {
+  it('disables production when the core and one unit fill the cell', () => {
     const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 20, shield: 20, state: 'NORMAL' }
     const first: WorldObject = { kind: 'UNIT', id: 'first', controlled: true, position: [0, 0], hp: 2, unit_type: 'WORKER' }
-    const second: WorldObject = { kind: 'UNIT', id: 'second', controlled: true, position: [0, 0], hp: 4, unit_type: 'VANGUARD' }
-    expect(getActionAvailability(state([core, first, second], 20), core).spawns).toEqual({ WORKER: false, VANGUARD: false, RANGER: false })
-    const afterDeparture = getActionAvailability(state([core, first, second], 20), core, { tick: 1, unit_actions: { first: { type: 'MOVE', direction: 'RIGHT' } } })
+    expect(getActionAvailability(state([core, first], 20), core).spawns).toEqual({ WORKER: false, VANGUARD: false, RANGER: false })
+    const afterDeparture = getActionAvailability(state([core, first], 20), core, { tick: 1, unit_actions: { first: { type: 'MOVE', direction: 'RIGHT' } } })
     expect(afterDeparture.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
   })
 })

@@ -9,10 +9,13 @@
   --color-space-900: #0a0a0a;
   --color-space-850: #111111;
   --color-space-800: #18181b;
-  --color-cyan-signal: #54e7ff;
-  --color-green-resource: #6dff72;
-  --color-violet-cosmic: #9d8cff;
-  --color-coral-hostile: #ff6b7d;
+  --color-cyan-signal: #4591c5;
+  --color-signal-hover: #5b9fcb;
+  --color-blue-soft: #8bb7d4;
+  --color-indigo-deep: #1f255b;
+  --color-violet-cosmic: #6875a7;
+  --color-green-resource: #76b889;
+  --color-coral-hostile: #c66370;
   --radius-gold-sm: .375rem;
   --radius-gold: .625rem;
   --radius-gold-lg: 1rem;
@@ -28,8 +31,8 @@ button, [role="button"] { cursor: pointer; }
 
 .cosmic-bg {
   background:
-    radial-gradient(circle at 18% 10%, rgba(255, 255, 255, .025), transparent 28rem),
-    radial-gradient(circle at 85% 78%, rgba(255, 255, 255, .018), transparent 32rem),
+    radial-gradient(circle at 18% 10%, rgba(31, 37, 91, .12), transparent 28rem),
+    radial-gradient(circle at 85% 78%, rgba(69, 145, 197, .045), transparent 32rem),
     #000;
 }
 .cosmic-bg::before {
@@ -38,13 +41,13 @@ button, [role="button"] { cursor: pointer; }
   background-size: 37px 37px; background-position: 12px 7px;
   mask-image: linear-gradient(to bottom, black, transparent 70%);
 }
-.panel { background: rgba(10, 10, 10, .88); border: 1px solid rgba(255, 255, 255, .11); box-shadow: inset 0 1px rgba(255,255,255,.025); backdrop-filter: blur(18px); }
-.panel-strong { background: #0a0a0a; border: 1px solid rgba(255, 255, 255, .13); }
+.panel { background: rgba(10, 10, 12, .9); border: 1px solid rgba(104, 117, 167, .18); box-shadow: inset 0 1px rgba(139,183,212,.025); backdrop-filter: blur(18px); }
+.panel-strong { background: #0a0a0b; border: 1px solid rgba(104, 117, 167, .2); }
 .eyebrow { font: 600 10px/1 var(--font-mono); letter-spacing: .18em; text-transform: uppercase; color: #71717a; }
-.focus-ring { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950; }
-.input { @apply min-h-12 w-full rounded-gold border border-white/10 bg-white/[.035] px-4 text-base text-zinc-100 placeholder:text-zinc-600 transition-colors duration-200 hover:border-white/20 focus:border-cyan-signal/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950; }
-.primary-button { @apply min-h-11 rounded-gold bg-cyan-signal px-4 font-display text-sm font-semibold text-space-950 transition-colors duration-200 hover:bg-cyan-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
-.secondary-button { @apply min-h-11 rounded-gold border border-white/10 bg-white/[.035] px-4 text-sm font-medium text-zinc-200 transition-colors duration-200 hover:border-white/20 hover:bg-white/[.07] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/70 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
+.focus-ring { @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950; }
+.input { @apply min-h-12 w-full rounded-gold border border-white/10 bg-white/[.035] px-4 text-base text-zinc-100 placeholder:text-zinc-600 transition-colors duration-200 hover:border-violet-cosmic/35 focus:border-cyan-signal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950; }
+.primary-button { @apply min-h-11 rounded-gold bg-cyan-signal px-4 font-display text-sm font-semibold text-space-950 transition-colors duration-200 hover:bg-signal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
+.secondary-button { @apply min-h-11 rounded-gold border border-white/10 bg-white/[.035] px-4 text-sm font-medium text-zinc-200 transition-colors duration-200 hover:border-violet-cosmic/30 hover:bg-indigo-deep/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }

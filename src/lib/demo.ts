@@ -3,6 +3,7 @@ import type { PlayerState, Receipt } from './types'
 const id = (suffix: string) => `00000000-0000-4000-8000-${suffix.padStart(12, '0')}`
 
 export const demoState: PlayerState = {
+  status: 'ACTIVE',
   resources: 42,
   population: 6,
   population_tier: 0,
