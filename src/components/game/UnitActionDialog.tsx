@@ -2,7 +2,7 @@ import { PackagePlus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { UNIT_COST, type ActionAvailability, type AvailableAction } from '../../lib/actionAvailability'
-import type { CommandPlan, CoreAction, StreamPhase, UnitAction, UnitActionType, UnitType, WorldObject } from '../../lib/types'
+import type { CommandPlan, CoreAction, Position, StreamPhase, UnitAction, UnitActionType, UnitType, WorldObject } from '../../lib/types'
 
 export interface MapAnchor { x: number; y: number; side: 'left' | 'right' | 'top' | 'bottom' }
 
@@ -10,6 +10,7 @@ interface Props {
   anchor: MapAnchor
   selected: WorldObject
   plan: CommandPlan
+  movementGoal?: Position
   phase: StreamPhase
   resources: number
   availability: ActionAvailability
@@ -17,6 +18,7 @@ interface Props {
   onTargeting: () => void
   onSweepTargeting: () => void
   onMoveTargeting: () => void
+  onCancelMovementGoal?: () => void
   onUnitAction: (id: string, action: UnitAction | null) => void
   onCoreAction: (action: CoreAction | null) => void
 }
@@ -63,6 +65,7 @@ export function UnitActionDialog(props: Props) {
         </button>
       })}</div>
     </section>}
-    {currentAction && <div className="mt-3 flex min-h-11 items-center justify-between rounded-gold border border-violet-cosmic/10 bg-indigo-deep/35 pl-3 font-mono text-[10px] text-blue-soft"><span>{currentAction.type}{'direction' in currentAction && currentAction.direction ? ` · ${currentAction.direction}` : ''}{'unit_type' in currentAction && currentAction.unit_type ? ` · ${currentAction.unit_type}` : ''}</span><button onClick={clear} className="focus-ring grid size-11 place-items-center rounded-gold-sm hover:bg-white/5" aria-label={t('game.clear')}><Trash2 size={14} /></button></div>}
+    {props.movementGoal && <div className="mt-3 flex min-h-11 items-center justify-between rounded-gold border border-violet-cosmic/10 bg-indigo-deep/35 pl-3 font-mono text-[10px] text-blue-soft"><span>{t('game.routeTo', { x: props.movementGoal[0], y: props.movementGoal[1] })}</span><button onClick={props.onCancelMovementGoal} className="focus-ring grid size-11 place-items-center rounded-gold-sm hover:bg-white/5" aria-label={t('game.clearRoute')}><Trash2 size={14} /></button></div>}
+    {currentAction && !props.movementGoal && <div className="mt-3 flex min-h-11 items-center justify-between rounded-gold border border-violet-cosmic/10 bg-indigo-deep/35 pl-3 font-mono text-[10px] text-blue-soft"><span>{currentAction.type}{'direction' in currentAction && currentAction.direction ? ` · ${currentAction.direction}` : ''}{'unit_type' in currentAction && currentAction.unit_type ? ` · ${currentAction.unit_type}` : ''}</span><button onClick={clear} className="focus-ring grid size-11 place-items-center rounded-gold-sm hover:bg-white/5" aria-label={t('game.clear')}><Trash2 size={14} /></button></div>}
   </div>
 }

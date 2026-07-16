@@ -1,6 +1,7 @@
 import type { CommandPlan, Direction, PlayerState, Position, WorldObject } from './types'
 import { MAX_ENTITIES_PER_CELL } from './gameRules'
 import { positionKey } from './visibility'
+import type { MovementRoute } from './pathfinding'
 
 const steps: { direction: Direction; dx: number; dy: number }[] = [
   { direction: 'UP', dx: 0, dy: -1 }, { direction: 'RIGHT', dx: 1, dy: 0 },
@@ -13,6 +14,7 @@ export function moveTargets(state: PlayerState, selected: WorldObject, plan?: Co
   return steps.map(({ dx, dy }) => [selected.position![0] + dx, selected.position![1] + dy] as Position).filter((target) => {
     const key = positionKey(target)
     if (obstacles.has(key)) return false
+    if (state.objects.some((object) => object.controlled === false && (object.kind === 'CORE' || object.kind === 'UNIT') && object.position?.[0] === target[0] && object.position?.[1] === target[1])) return false
     if (selected.kind !== 'CORE') return projectedEntityCount(state, target, plan, selected.id) < MAX_ENTITIES_PER_CELL
     if (resources.has(key)) return false
     if (state.objects.some((object) => object.position?.[0] === target[0] && object.position?.[1] === target[1] && (object.kind === 'CORE' || object.controlled === false))) return false
@@ -42,12 +44,23 @@ export function directionTo(from: Position, to: Position): Direction | null {
 
 export interface MoveArrow { objectId: string; from: Position; to: Position; dashed?: boolean; hostile?: boolean }
 
-export function plannedMoveArrows(state: PlayerState, plan: CommandPlan): MoveArrow[] {
+export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes: MovementRoute[] = []): MoveArrow[] {
   const arrows: MoveArrow[] = []
+  const routed = new Set(routes.map((route) => route.objectId))
+  for (const route of routes) {
+    const object = state.objects.find((candidate) => candidate.id === route.objectId)
+    const currentDestination = object ? currentStepDestination(object, plan) : null
+    for (let index = 0; index < route.path.length - 1; index++) {
+      const from = route.path[index], to = route.path[index + 1]
+      const current = index === 0 && currentDestination && samePosition(currentDestination, to)
+      arrows.push({ objectId: route.objectId, from, to, dashed: !current })
+    }
+  }
   for (const object of state.objects) {
     if (!object.id || !object.position) continue
+    if (routed.has(object.id)) continue
     if (object.kind === 'CORE' && object.state === 'MOVING' && object.destination) {
-      arrows.push({ objectId: object.id, from: object.position, to: object.destination, dashed: true, hostile: object.controlled === false })
+      arrows.push({ objectId: object.id, from: object.position, to: object.destination, dashed: false, hostile: object.controlled === false })
       continue
     }
     if (!object.controlled) continue
@@ -57,6 +70,19 @@ export function plannedMoveArrows(state: PlayerState, plan: CommandPlan): MoveAr
     if (step) arrows.push({ objectId: object.id, from: object.position, to: [object.position[0] + step.dx, object.position[1] + step.dy] })
   }
   return arrows
+}
+
+function currentStepDestination(object: WorldObject, plan: CommandPlan): Position | null {
+  if (!object.position) return null
+  if (object.kind === 'CORE' && object.state === 'MOVING' && object.destination) return object.destination
+  const action = object.kind === 'CORE' ? plan.core_action : object.id ? plan.unit_actions[object.id] : undefined
+  if (!action || (action.type !== 'MOVE' && action.type !== 'START_MOVE') || !action.direction) return null
+  const step = steps.find((candidate) => candidate.direction === action.direction)
+  return step ? [object.position[0] + step.dx, object.position[1] + step.dy] : null
+}
+
+function samePosition(left: Position, right: Position) {
+  return left[0] === right[0] && left[1] === right[1]
 }
 
 function terrainPositions(state: PlayerState, kind: 'OBSTACLE' | 'RESOURCE') {

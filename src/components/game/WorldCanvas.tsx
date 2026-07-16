@@ -1,6 +1,5 @@
 import { BowArrow } from 'lucide-react'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import { useTranslation } from 'react-i18next'
 import { resolvedShotMarkers, resolvedSweepMarkers, type ResolvedShotMarker } from '../../lib/combatAnimation'
 import type { ShotMarker, SweepMarker } from '../../lib/combatPreview'
 import type { ExploredCell } from '../../lib/exploration'
@@ -15,8 +14,9 @@ interface Props {
   explored: Map<string, ExploredCell>
   selectedId: string | null
   targeting: boolean
+  destinationSelecting: boolean
   targetableIds: Set<string>
-  moveTargets: Position[]
+  routeDestinations: RouteDestination[]
   moveArrows: MoveArrow[]
   sweepMarkers: SweepMarker[]
   shotMarkers: ShotMarker[]
@@ -24,9 +24,11 @@ interface Props {
   zoomRequest: number
   onSelect: (object: WorldObject | null) => void
   onTarget: (object: WorldObject) => void
-  onMoveTarget: (position: Position) => void
+  onMoveDestination: (position: Position) => void
   onAnchorChange: (anchor: MapAnchor | null) => void
 }
+
+export interface RouteDestination { objectId: string; position: Position; blocked: boolean }
 
 interface Camera { x: number; y: number; cell: number }
 const WORKER_CARGO_CAPACITY = 1
@@ -42,8 +44,7 @@ const HOSTILE_CORAL = '#c66370'
 const RESOURCE_GREEN = '#76b889'
 const RESOURCE_GREEN_LIGHT = '#b2d2ba'
 
-export function WorldCanvas({ state, explored, selectedId, targeting, targetableIds, moveTargets, moveArrows, sweepMarkers, shotMarkers, centerRequest, zoomRequest, onSelect, onTarget, onMoveTarget, onAnchorChange }: Props) {
-  const { t } = useTranslation()
+export function WorldCanvas({ state, explored, selectedId, targeting, destinationSelecting, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, centerRequest, zoomRequest, onSelect, onTarget, onMoveDestination, onAnchorChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const bufferRef = useRef<HTMLCanvasElement | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -119,7 +120,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, targetable
       const shotProgress = activeShot ? Math.min(1, (now - activeShot.startedAt) / SHOT_ANIMATION_MS) : 1
       const selectionProgress = selectionRipple?.objectId === selectedId ? Math.min(1, (now - selectionRipple.startedAt) / SELECTION_RIPPLE_MS) : 1
       const easedProgress = linearProgress * linearProgress * (3 - 2 * linearProgress)
-      try { drawWorld(bufferContext, size, camera, state, explored, visible, selectedId, targetableIds, moveTargets, moveArrows, sweepMarkers, shotMarkers, activeMovement?.motions ?? new Map(), easedProgress, activeSweep?.markers ?? [], sweepProgress, activeShot?.markers ?? [], shotProgress, selectionProgress) }
+      try { drawWorld(bufferContext, size, camera, state, explored, visible, selectedId, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, activeMovement?.motions ?? new Map(), easedProgress, activeSweep?.markers ?? [], sweepProgress, activeShot?.markers ?? [], shotProgress, selectionProgress) }
       catch (error) { console.error('WORLD_RENDER_FAILED', error); return }
       context.setTransform(1, 0, 0, 1, 0, 0); context.clearRect(0, 0, pixelWidth, pixelHeight); context.drawImage(buffer, 0, 0)
       if ((activeMovement && linearProgress < 1) || (activeSweep && sweepProgress < 1) || (activeShot && shotProgress < 1) || (selectionRipple && selectionProgress < 1)) animationFrameRef.current = requestAnimationFrame(renderFrame)
@@ -132,7 +133,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, targetable
     }
     renderFrame(performance.now())
     return () => { if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current); animationFrameRef.current = null }
-  }, [size, camera, state, explored, visible, selectedId, targetableIds, moveTargets, moveArrows, sweepMarkers, shotMarkers])
+  }, [size, camera, state, explored, visible, selectedId, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers])
   useEffect(() => {
     const selected = entities.find((object) => object.id === selectedId)
     if (!selected?.position) { onAnchorChange(null); return }
@@ -159,13 +160,13 @@ export function WorldCanvas({ state, explored, selectedId, targeting, targetable
   }
   const worldToScreen = ([x, y]: Position) => ({ left: size.width / 2 + (x - camera.x) * camera.cell, top: size.height / 2 + (y - camera.y) * camera.cell })
   const choose = (position: Position) => {
-    if (moveTargets.length) { if (moveTargets.some((target) => target[0] === position[0] && target[1] === position[1])) onMoveTarget(position); return }
+    if (destinationSelecting) { onMoveDestination(position); return }
     const candidates = entities.filter((object) => object.position?.[0] === position[0] && object.position?.[1] === position[1])
     if (targeting) { const target = candidates.find((object) => object.id && targetableIds.has(object.id)); if (target) onTarget(target); return }
     const currentIndex = candidates.findIndex((object) => object.id === selectedId)
     onSelect(candidates.length ? candidates[(currentIndex + 1) % candidates.length] : null)
   }
-  return <div ref={containerRef} className={`relative h-full min-h-[420px] w-full overflow-hidden bg-space-950 ${targeting || moveTargets.length ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}>
+  return <div ref={containerRef} className={`relative h-full min-h-[420px] w-full overflow-hidden bg-space-950 ${targeting || destinationSelecting ? 'cursor-crosshair' : 'cursor-grab active:cursor-grabbing'}`}>
     <canvas
       ref={canvasRef} className="h-full w-full touch-none" aria-label="Tactical world map"
       onWheel={(event) => { event.preventDefault(); setCamera((current) => ({ ...current, cell: Math.min(78, Math.max(24, current.cell - Math.sign(event.deltaY) * 5)) })) }}
@@ -180,14 +181,10 @@ export function WorldCanvas({ state, explored, selectedId, targeting, targetable
       const iconSize = Math.max(19, camera.cell * .46), left = from.left + px * side * camera.cell * .31 + ux * camera.cell * .1, top = from.top + py * side * camera.cell * .31 + uy * camera.cell * .1
       return <BowArrow key={marker.objectId} aria-hidden="true" size={iconSize} strokeWidth={1.8} style={{ left, top, transform: `translate(-50%, -50%) rotate(${Math.atan2(dy, dx) * 180 / Math.PI + 45}deg)` }} className="pointer-events-none absolute z-10 text-cyan-signal drop-shadow-[0_0_6px_rgba(69,145,197,.5)]" />
     })}
-    {moveTargets.map((target) => {
-      const point = worldToScreen(target), hitSize = Math.max(36, camera.cell)
-      return <button key={`${target[0]},${target[1]}`} type="button" onClick={(event) => { event.stopPropagation(); onMoveTarget(target) }} aria-label={t('game.moveTo', { x: target[0], y: target[1] })} style={{ ...point, width: hitSize, height: hitSize, transform: 'translate(-50%, -50%)' }} className="focus-ring absolute z-20 rounded-gold-sm border border-cyan-signal/55 bg-indigo-deep/20 shadow-[inset_0_0_16px_rgba(69,145,197,.06)] hover:border-cyan-signal hover:bg-indigo-deep/35" />
-    })}
   </div>
 }
 
-function drawWorld(ctx: CanvasRenderingContext2D, size: { width: number; height: number }, camera: Camera, state: PlayerState, explored: Map<string, ExploredCell>, visible: Set<string>, selectedId: string | null, targetableIds: Set<string>, moveTargets: Position[], moveArrows: MoveArrow[], sweepMarkers: SweepMarker[], shotMarkers: ShotMarker[], motions: Map<string, EntityMotion>, movementProgress: number, resolvedSweeps: SweepMarker[], sweepProgress: number, resolvedShots: ResolvedShotMarker[], shotProgress: number, selectionProgress: number) {
+function drawWorld(ctx: CanvasRenderingContext2D, size: { width: number; height: number }, camera: Camera, state: PlayerState, explored: Map<string, ExploredCell>, visible: Set<string>, selectedId: string | null, targetableIds: Set<string>, routeDestinations: RouteDestination[], moveArrows: MoveArrow[], sweepMarkers: SweepMarker[], shotMarkers: ShotMarker[], motions: Map<string, EntityMotion>, movementProgress: number, resolvedSweeps: SweepMarker[], sweepProgress: number, resolvedShots: ResolvedShotMarker[], shotProgress: number, selectionProgress: number) {
   ctx.clearRect(0, 0, size.width, size.height); ctx.fillStyle = '#000000'; ctx.fillRect(0, 0, size.width, size.height)
   const toScreen = ([x, y]: Position) => [size.width / 2 + (x - camera.x) * camera.cell, size.height / 2 + (y - camera.y) * camera.cell] as const
   const minX = Math.floor(camera.x - size.width / camera.cell / 2) - 1, maxX = Math.ceil(camera.x + size.width / camera.cell / 2) + 1
@@ -201,12 +198,7 @@ function drawWorld(ctx: CanvasRenderingContext2D, size: { width: number; height:
     if (memory?.kind === 'OBSTACLE') drawObstacle(ctx, sx, sy, camera.cell, isVisible)
     if (memory?.kind === 'RESOURCE') drawResource(ctx, sx, sy, camera.cell, isVisible, memory.amount ?? 0, memory.capacity ?? 1)
   }
-  for (const target of moveTargets) {
-    const [sx, sy] = toScreen(target), size = camera.cell * .76
-    ctx.fillStyle = 'rgba(31,37,91,.22)'; ctx.strokeStyle = 'rgba(69,145,197,.72)'; ctx.lineWidth = 1.5
-    ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.roundRect(sx - size / 2, sy - size / 2, size, size, Math.max(3, camera.cell * .09)); ctx.fill(); ctx.stroke(); ctx.setLineDash([])
-    ctx.fillStyle = PRIMARY_BLUE; ctx.beginPath(); ctx.arc(sx, sy, Math.max(2, camera.cell * .055), 0, Math.PI * 2); ctx.fill()
-  }
+  for (const destination of routeDestinations) drawRouteDestination(ctx, toScreen(destination.position), camera.cell, destination.blocked)
   for (const arrow of moveArrows) drawMoveArrow(ctx, toScreen(arrow.from), toScreen(arrow.to), camera.cell, arrow.hostile ? HOSTILE_CORAL : PRIMARY_BLUE, arrow.dashed === true)
   for (const marker of sweepMarkers) drawSweepSword(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell)
   for (const marker of shotMarkers) drawShotArc(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell)
@@ -343,7 +335,7 @@ function drawMoveArrow(ctx: CanvasRenderingContext2D, [fromX, fromY]: readonly [
   if (!length) return
   const ux = dx / length, uy = dy / length, startOffset = cell * .29, endOffset = cell * .25
   const startX = fromX + ux * startOffset, startY = fromY + uy * startOffset, endX = toX - ux * endOffset, endY = toY - uy * endOffset
-  ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(2, cell * .055); ctx.lineCap = 'round'; ctx.shadowColor = color; ctx.shadowBlur = 9
+  ctx.save(); ctx.globalAlpha = dashed ? .55 : 1; ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = Math.max(2, cell * .055); ctx.lineCap = 'round'; ctx.shadowColor = color; ctx.shadowBlur = dashed ? 3 : 7
   if (dashed) ctx.setLineDash([Math.max(4, cell * .12), Math.max(3, cell * .09)])
   ctx.beginPath(); ctx.moveTo(startX, startY); ctx.lineTo(endX, endY); ctx.stroke()
   const head = Math.max(7, cell * .18), wingX = -uy, wingY = ux
@@ -351,6 +343,14 @@ function drawMoveArrow(ctx: CanvasRenderingContext2D, [fromX, fromY]: readonly [
   ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(endX - ux * head + wingX * head * .58, endY - uy * head + wingY * head * .58); ctx.lineTo(endX - ux * head - wingX * head * .58, endY - uy * head - wingY * head * .58); ctx.closePath()
   if (dashed) ctx.stroke(); else ctx.fill()
   ctx.restore()
+}
+
+function drawRouteDestination(ctx: CanvasRenderingContext2D, [x, y]: readonly [number, number], cell: number, blocked: boolean) {
+  const color = blocked ? HOSTILE_CORAL : PRIMARY_BLUE
+  const radius = cell * .22
+  ctx.save(); ctx.globalAlpha = blocked ? .65 : .8; ctx.strokeStyle = color; ctx.fillStyle = 'rgba(31,37,91,.28)'; ctx.lineWidth = Math.max(1.5, cell * .035); ctx.setLineDash([Math.max(3, cell * .07), Math.max(2, cell * .05)])
+  ctx.beginPath(); ctx.moveTo(x, y - radius); ctx.lineTo(x + radius, y); ctx.lineTo(x, y + radius); ctx.lineTo(x - radius, y); ctx.closePath(); ctx.fill(); ctx.stroke(); ctx.setLineDash([])
+  ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, Math.max(1.5, cell * .035), 0, Math.PI * 2); ctx.fill(); ctx.restore()
 }
 
 function drawObstacle(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, visible: boolean) {

@@ -42,4 +42,12 @@ describe('UnitActionDialog', () => {
     expect(onCoreAction).toHaveBeenCalledWith({ type: 'SPAWN', unit_type: 'WORKER' })
     expect(onClose).toHaveBeenCalledOnce()
   })
+
+  it('shows and cancels an autonomous movement destination', async () => {
+    const user = userEvent.setup(); const onCancelMovementGoal = vi.fn()
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={{ tick: 1, unit_actions: { worker: { type: 'MOVE', direction: 'RIGHT' } } }} movementGoal={[4, 2]} phase="open" resources={0} availability={{ actions: { MOVE: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={() => undefined} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onCancelMovementGoal={onCancelMovementGoal} onUnitAction={() => undefined} onCoreAction={() => undefined} />)
+    expect(screen.getByText('ROUTE · [4, 2]')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Cancel route' }))
+    expect(onCancelMovementGoal).toHaveBeenCalledOnce()
+  })
 })
