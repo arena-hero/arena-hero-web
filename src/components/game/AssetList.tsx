@@ -1,13 +1,12 @@
-import { Box, CircleDot, Crosshair, Pickaxe } from 'lucide-react'
+import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import type { PlayerState, WorldObject } from '../../lib/types'
 import { Logo } from '../Logo'
 import { GameStats } from './GameStats'
-
-const iconFor = (object: WorldObject) => object.kind === 'CORE' ? CircleDot : object.unit_type === 'WORKER' ? Pickaxe : object.unit_type === 'RANGER' ? Crosshair : Box
+import { UnitArtIcon } from './UnitArtIcon'
 
 export function AssetList({ state, objects, selectedId, onSelect }: { state: PlayerState; objects: WorldObject[]; selectedId: string | null; onSelect: (object: WorldObject) => void }) {
-  const { t } = useTranslation(); const controlled = objects.filter((object) => object.controlled)
+  const { t } = useTranslation(); const controlled = useMemo(() => objects.filter((object) => object.controlled), [objects])
   return <aside className="panel-strong hidden h-full min-h-0 flex-col border-y-0 border-l-0 lg:flex">
     <div className="border-b border-white/[.07]">
       <div className="px-5 py-4"><Logo /><GameStats state={state} className="mt-4" /></div>
@@ -21,8 +20,8 @@ export function AssetList({ state, objects, selectedId, onSelect }: { state: Pla
       </div>
     </div>
     <div className="min-h-0 flex-1 overflow-y-auto p-2">
-      {controlled.map((object) => { const Icon = iconFor(object); const name = object.kind === 'CORE' ? t('game.units.CORE') : t(`game.units.${object.unit_type}`); return <button key={object.id} onClick={() => onSelect(object)} className={`focus-ring mb-0.5 flex min-h-11 w-full items-center gap-2 rounded-gold px-2.5 text-left transition-colors ${selectedId === object.id ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/[.04] hover:text-zinc-100'}`}>
-        <span className="grid size-7 shrink-0 place-items-center rounded-gold-sm border border-violet-cosmic/15 bg-indigo-deep/45"><Icon size={13} /></span><span className="flex min-w-0 flex-1 items-baseline gap-1.5"><span className="truncate text-xs font-medium">{name}</span><span className="shrink-0 font-mono text-[9px] text-zinc-600">[{object.position?.join(', ') ?? '—'}]</span></span><span className="shrink-0 font-mono text-[9px]">{object.hp} HP</span>
+      {controlled.map((object) => { const artType = object.kind === 'CORE' ? 'CORE' : object.unit_type ?? 'WORKER'; const name = object.kind === 'CORE' ? t('game.units.CORE') : t(`game.units.${object.unit_type}`); return <button key={object.id} onClick={() => onSelect(object)} style={{ contentVisibility: 'auto', containIntrinsicSize: '44px' }} className={`focus-ring mb-0.5 flex min-h-11 w-full items-center gap-2 rounded-gold px-2.5 text-left transition-colors ${selectedId === object.id ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/[.04] hover:text-zinc-100'}`}>
+        <span className="grid size-7 shrink-0 place-items-center rounded-gold-sm border border-violet-cosmic/15 bg-indigo-deep/45"><UnitArtIcon type={artType} className="size-5" /></span><span className="flex min-w-0 flex-1 items-baseline gap-1.5"><span className="truncate text-xs font-medium">{name}</span><span className="shrink-0 font-mono text-[9px] text-zinc-600">[{object.position?.join(', ') ?? '—'}]</span></span><span className="shrink-0 font-mono text-[9px]">{object.hp} HP</span>
       </button> })}
     </div>
   </aside>

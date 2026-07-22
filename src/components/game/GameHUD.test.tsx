@@ -7,9 +7,10 @@ import { GameHUD } from './GameHUD'
 describe('GameHUD', () => {
   afterEach(() => void i18n.changeLanguage('en'))
 
-  it('shows only the command countdown over the map', () => {
+  it('shows only the command countdown', () => {
     render(<GameHUD phase="open" stateReceivedAt={Date.now()} />)
     expect(screen.getByRole('progressbar', { name: 'Command window' })).toBeInTheDocument()
+    expect(screen.queryByText('Champion Beacon')).not.toBeInTheDocument()
     expect(screen.queryByText('ORDERS OPEN')).not.toBeInTheDocument()
     expect(screen.queryByText('Resources')).not.toBeInTheDocument()
   })
@@ -18,6 +19,7 @@ describe('GameHUD', () => {
     await i18n.changeLanguage('zh')
     render(<GameHUD phase="open" stateReceivedAt={Date.now()} />)
     expect(screen.getByRole('progressbar', { name: '指令窗口' })).toBeInTheDocument()
+    expect(screen.queryByText('冠军信标')).not.toBeInTheDocument()
     expect(screen.queryByText('指令已开放')).not.toBeInTheDocument()
   })
 })

@@ -13,7 +13,15 @@ describe('UnitActionDialog', () => {
     expect(screen.getByRole('button', { name: 'Harvest' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Deposit' })).toBeDisabled()
     expect(screen.getByRole('button', { name: 'Move' })).toBeEnabled()
-    expect(screen.queryByRole('button', { name: 'Hold' })).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Wait' })).toBeEnabled()
+  })
+
+  it('can explicitly override an Agent action with WAIT', async () => {
+    const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
+    await user.click(screen.getByRole('button', { name: 'Wait' }))
+    expect(onUnitAction).toHaveBeenCalledWith('worker', { type: 'WAIT' })
+    expect(onClose).toHaveBeenCalledOnce()
   })
 
   it('closes after choosing a complete immediate action', async () => {
@@ -24,8 +32,16 @@ describe('UnitActionDialog', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
+  it('offers and immediately submits a relevant Beacon action', async () => {
+    const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, PICKUP_BEACON: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
+    await user.click(screen.getByRole('button', { name: 'Pick up Beacon' }))
+    expect(onUnitAction).toHaveBeenCalledWith('worker', { type: 'PICKUP_BEACON' })
+    expect(onClose).toHaveBeenCalledOnce()
+  })
+
   it('shows Core production choices and their costs even when unavailable', () => {
-    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 20, shield: 20, state: 'NORMAL' as const }
+    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }
     render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={core} plan={plan} phase="open" resources={4} availability={{ actions: { REPAIR_SHIELD: false, START_MOVE: true, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={() => undefined} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={() => undefined} />)
     expect(screen.getByText('Produce unit')).toBeInTheDocument()
     expect(screen.getByText('4 available')).toBeInTheDocument()
@@ -36,7 +52,7 @@ describe('UnitActionDialog', () => {
 
   it('submits a selected Core production order immediately', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onCoreAction = vi.fn()
-    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 20, shield: 20, state: 'NORMAL' as const }
+    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }
     render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={core} plan={plan} phase="open" resources={5} availability={{ actions: { REPAIR_SHIELD: false, START_MOVE: true, WAIT: true }, spawns: { WORKER: true, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={onCoreAction} />)
     await user.click(screen.getByRole('button', { name: 'Worker · 5 resources' }))
     expect(onCoreAction).toHaveBeenCalledWith({ type: 'SPAWN', unit_type: 'WORKER' })

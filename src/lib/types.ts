@@ -1,15 +1,12 @@
 export type Position = [number, number]
 export type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 export type UnitType = 'WORKER' | 'VANGUARD' | 'RANGER'
-export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'WAIT'
-export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'WAIT'
+export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'WAIT'
+export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'WAIT'
 
 export interface WorldObject {
   kind: 'OBSTACLE' | 'RESOURCE' | 'CORE' | 'UNIT'
   positions?: Position[]
-  amount?: number
-  capacity?: number
-  regen_interval_ticks?: number
   id?: string
   controlled?: boolean
   position?: Position
@@ -35,6 +32,12 @@ export interface GameEvent {
   values?: Record<string, unknown>
 }
 
+export interface ChampionBeaconView {
+  position: Position
+  status?: 'GROUND' | 'CARRIED'
+  carrier_id?: string
+}
+
 export interface PlayerState {
   status: 'ACTIVE' | 'RESPAWNING'
   respawn_at_tick?: number
@@ -42,6 +45,7 @@ export interface PlayerState {
   population: number
   population_tier: number
   upkeep_next_tick: number
+  champion_beacon: ChampionBeaconView
   objects: WorldObject[]
   events: GameEvent[]
 }
@@ -65,11 +69,14 @@ export interface CommandPlan {
   core_action?: CoreAction
 }
 
-export interface Receipt {
-  accepted: boolean
+export interface ReceivedNotice {
   tick: number
   source: 'AGENT' | 'MANUAL'
   received_at: string
+}
+
+export interface Receipt extends ReceivedNotice {
+  accepted: true
 }
 
 export interface User {
@@ -91,6 +98,9 @@ export interface PlayerStats {
   core_destruction_participations: number
   resources_harvested: number
   resources_deposited: number
+  beacon_pickups: number
+  beacon_ticks_held: number
+  beacon_bonus_resources_harvested: number
   units_spawned: number
   units_lost: number
   core_survival_ticks: number

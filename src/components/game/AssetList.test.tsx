@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import '../../lib/i18n'
 import { AssetList } from './AssetList'
 
-const state = { status: 'ACTIVE' as const, resources: 42, population: 6, population_tier: 0, upkeep_next_tick: 1, objects: [], events: [] }
+const state = { status: 'ACTIVE' as const, resources: 42, population: 6, population_tier: 0, upkeep_next_tick: 1, champion_beacon: { position: [0, 0] as [number, number] }, objects: [], events: [] }
 
 describe('AssetList', () => {
   it('places game stats below the Arena Hero title', () => {

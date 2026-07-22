@@ -10,12 +10,13 @@ import { UnitActionDialog, type MapAnchor } from '../components/game/UnitActionD
 import { useGameStream } from '../hooks/useGameStream'
 import { useAuth } from '../context/AuthContext'
 import { plannedShotMarkers, plannedSweepMarkers, rangerTargets } from '../lib/combatPreview'
-import { directionTo, plannedMoveArrows } from '../lib/movementPreview'
+import { directionTo, moveTargets, plannedMoveArrows } from '../lib/movementPreview'
 import { getErrorMessage } from '../lib/errorMessage'
 import { getActionAvailability } from '../lib/actionAvailability'
 import { coreDestroyerFromEvents } from '../lib/destruction'
-import { applyAutonomousMovement, buildMovementRoutes, findMovementPath, readMovementGoals, type MovementGoals, type PathFailure } from '../lib/pathfinding'
+import { applyAutonomousMovement, buildMovementRoutes, findMovementPath, reachableMovementDestinations, readMovementGoals, type MovementGoals, type PathFailure } from '../lib/pathfinding'
 import type { CommandPlan, CoreAction, Position, UnitAction, WorldObject } from '../lib/types'
+import { positionKey } from '../lib/visibility'
 
 export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const { t } = useTranslation(); const { user } = useAuth(); const game = useGameStream(demo, demo ? 'demo' : user?.username ?? 'anonymous')
@@ -27,6 +28,7 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const destroyerStorageKey = `arena-hero.core-destroyer.${demo ? 'demo' : user?.username ?? 'anonymous'}`
   const [coreDestroyer, setCoreDestroyer] = useState<string | null>(() => sessionStorage.getItem(destroyerStorageKey))
   const [centerRequest, setCenterRequest] = useState(0); const [zoomRequest, setZoomRequest] = useState(0)
+  const [centerPosition, setCenterPosition] = useState<Position | null>(null)
   const [plan, setPlan] = useState<CommandPlan>({ tick: game.tick ?? 0, unit_actions: {} })
   const [movementGoals, setMovementGoals] = useState<MovementGoals>(() => readMovementGoals(localStorage.getItem(movementStorageKey)))
   const planRef = useRef(plan); const tickRef = useRef(game.tick); const submitQueueRef = useRef<Promise<void>>(Promise.resolve()); const movementGoalsRef = useRef(movementGoals); const autoMovementTickRef = useRef<number | null>(null)
@@ -66,7 +68,16 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const actionAvailability = useMemo(() => game.state && selected ? getActionAvailability(game.state, selected, plan) : null, [game.state, plan, selected])
   const movementRoutes = useMemo(() => game.state ? buildMovementRoutes(game.state, game.explored, movementGoals, plan) : [], [game.explored, game.state, movementGoals, plan])
   const moveArrows = useMemo(() => game.state ? plannedMoveArrows(game.state, plan, movementRoutes) : [], [game.state, movementRoutes, plan])
-  const routeDestinations = useMemo(() => Object.entries(movementGoals).map(([objectId, position]) => ({ objectId, position, blocked: movementRoutes.find((route) => route.objectId === objectId)?.blocked ?? true })), [movementGoals, movementRoutes])
+  const plannedRouteDestinations = useMemo(() => {
+    const routesByObject = new Map(movementRoutes.map((route) => [route.objectId, route] as const))
+    return Object.entries(movementGoals).map(([objectId, position]) => ({ objectId, position, blocked: routesByObject.get(objectId)?.blocked ?? true }))
+  }, [movementGoals, movementRoutes])
+  const routeDestinations = useMemo(() => {
+    if (!moveSelecting || !game.state || !selected?.id) return plannedRouteDestinations
+    const immediate = new Set(moveTargets(game.state, selected, plan).map(positionKey))
+    const selectable = reachableMovementDestinations(game.state, game.explored, selected, plan).map((position) => ({ objectId: selected.id!, position, blocked: false, selectable: true, immediate: immediate.has(positionKey(position)) }))
+    return [...plannedRouteDestinations.filter((destination) => destination.objectId !== selected.id), ...selectable]
+  }, [game.explored, game.state, moveSelecting, plan, plannedRouteDestinations, selected])
   const sweepMarkers = useMemo(() => game.state ? plannedSweepMarkers(game.state, plan) : [], [game.state, plan])
   const shotMarkers = useMemo(() => game.state ? plannedShotMarkers(game.state, plan) : [], [game.state, plan])
   const targetableIds = useMemo(() => {
@@ -105,12 +116,12 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     <AssetList state={game.state} objects={game.state.objects} selectedId={selectedId} onSelect={select} />
     <section className="relative min-h-0 overflow-hidden">
       {!respawning && <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />}
-      <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onMoveDestination={chooseMoveDestination} onAnchorChange={setAnchor} />
+      <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerPosition={centerPosition} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onMoveDestination={chooseMoveDestination} onCenterBeacon={() => { setCenterPosition(game.state!.champion_beacon.position); setCenterRequest((value) => value + 1) }} onAnchorChange={setAnchor} />
       {respawning && <RespawnOverlay remainingTicks={respawnTicksRemaining} destroyedBy={coreDestroyer} />}
       {!respawning && selected?.controlled && anchor && actionAvailability && !targetMode && !moveSelecting && <UnitActionDialog anchor={anchor} selected={selected} plan={plan} movementGoal={selected.id ? movementGoals[selected.id] : undefined} phase={game.phase} resources={game.state.resources} availability={actionAvailability} onClose={() => select(null)} onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }} onSweepTargeting={() => { setMoveSelecting(false); setTargetMode('SWEEP') }} onMoveTargeting={() => { setTargetMode(null); setMovementError(null); setMoveSelecting(true) }} onCancelMovementGoal={() => cancelMovementGoal(selected)} onUnitAction={unitAction} onCoreAction={coreAction} />}
       {targetMode && <div className="panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs text-coral-hostile">{targetMode === 'SWEEP' ? <Sword size={15} /> : <Crosshair size={15} />}<span>{t(targetMode === 'SWEEP' ? 'game.sweepHint' : 'game.targetHint')}</span><button onClick={() => setTargetMode(null)} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}
       {moveSelecting && <div className={`panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs ${movementError ? 'text-coral-hostile' : 'text-cyan-signal'}`}><Move size={15} /><span>{t(movementError === 'UNKNOWN_DESTINATION' ? 'game.routeUnknown' : movementError ? 'game.routeBlocked' : 'game.moveHint')}</span><button onClick={() => { setMoveSelecting(false); setMovementError(null) }} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}
-      {!respawning && <MapControls onCenter={() => setCenterRequest((value) => value + 1)} onZoom={(direction) => setZoomRequest((value) => direction * (Math.abs(value) + 1))} />}
+      {!respawning && <MapControls onCenter={() => { setCenterPosition(null); setCenterRequest((value) => value + 1) }} onZoom={(direction) => setZoomRequest((value) => direction * (Math.abs(value) + 1))} />}
       {game.error && <div role="alert" className="panel absolute bottom-4 right-4 z-30 max-w-[min(24rem,calc(100%-2rem))] px-4 py-3 text-xs leading-5 text-coral-hostile">{getErrorMessage(game.error)}</div>}
     </section>
   </div>

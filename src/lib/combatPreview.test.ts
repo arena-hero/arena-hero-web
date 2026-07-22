@@ -5,6 +5,7 @@ import type { PlayerState, WorldObject } from './types'
 const state: PlayerState = {
   status: 'ACTIVE',
   resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, events: [],
+  champion_beacon: { position: [99, 99] },
   objects: [{ kind: 'UNIT', id: 'vanguard', controlled: true, position: [2, 3], hp: 4, unit_type: 'VANGUARD' }],
 }
 

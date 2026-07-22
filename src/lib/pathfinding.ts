@@ -1,7 +1,7 @@
 import type { ExploredCell } from './exploration'
 import { MAX_ENTITIES_PER_CELL } from './gameRules'
-import { directionTo, projectedEntityCount } from './movementPreview'
-import type { CommandPlan, Position, WorldObject, PlayerState } from './types'
+import { directionTo } from './movementPreview'
+import type { CommandPlan, Direction, Position, WorldObject, PlayerState } from './types'
 import { computeVisibility, positionKey } from './visibility'
 
 export type MovementGoals = Record<string, Position>
@@ -27,23 +27,36 @@ interface SearchNode {
   order: number
 }
 
+interface NavigationContext {
+  explored: ReadonlyMap<string, ExploredCell>
+  visible: ReadonlySet<string>
+  terrainOverrides: Map<string, ExploredCell['kind']>
+  enemyCells: Set<string>
+  entityCounts: Map<string, number>
+  objectsById: Map<string, WorldObject>
+}
+
 const directions: Position[] = [[0, -1], [1, 0], [0, 1], [-1, 0]]
 const MAX_SEARCHED_CELLS = 50_000
 
 export function findMovementPath(state: PlayerState, explored: Map<string, ExploredCell>, object: WorldObject, destination: Position, plan?: CommandPlan): PathResult {
+  return findMovementPathInContext(createNavigationContext(state, explored), object, destination, plan)
+}
+
+function findMovementPathInContext(context: NavigationContext, object: WorldObject, destination: Position, plan?: CommandPlan): PathResult {
   if (!object.id || !object.controlled || !object.position || (object.kind !== 'UNIT' && object.kind !== 'CORE')) return { path: null, reason: 'NO_ROUTE' }
   if (samePosition(object.position, destination)) return { path: [object.position] }
 
-  const terrain = knownTerrain(state, explored)
   const destinationKey = positionKey(destination)
-  if (!terrain.has(destinationKey)) return { path: null, reason: 'UNKNOWN_DESTINATION' }
+  if (!terrainKind(context, destinationKey)) return { path: null, reason: 'UNKNOWN_DESTINATION' }
+  const projectedCounts = projectedEntityCounts(context, plan, object.id)
 
   const canEnter = (position: Position) => {
-    const kind = terrain.get(positionKey(position))
+    const key = positionKey(position)
+    const kind = terrainKind(context, key)
     if (!kind || kind === 'OBSTACLE' || (object.kind === 'CORE' && kind === 'RESOURCE')) return false
-    const hasEnemy = state.objects.some((candidate) => candidate.id !== object.id && candidate.controlled === false && (candidate.kind === 'CORE' || candidate.kind === 'UNIT') && candidate.position && samePosition(candidate.position, position))
-    if (hasEnemy) return false
-    return projectedEntityCount(state, position, plan, object.id) < MAX_ENTITIES_PER_CELL
+    if (context.enemyCells.has(key)) return false
+    return (projectedCounts.get(key) ?? 0) < MAX_ENTITIES_PER_CELL
   }
   if (!canEnter(destination)) return { path: null, reason: 'NO_ROUTE' }
 
@@ -66,7 +79,7 @@ export function findMovementPath(state: PlayerState, explored: Map<string, Explo
     for (const [dx, dy] of directions) {
       const next: Position = [current.position[0] + dx, current.position[1] + dy]
       const nextKey = positionKey(next)
-      if (!terrain.has(nextKey) || !canEnter(next)) continue
+      if (!terrainKind(context, nextKey) || !canEnter(next)) continue
       const nextScore = current.g + 1
       if (nextScore >= (scores.get(nextKey) ?? Number.POSITIVE_INFINITY)) continue
       cameFrom.set(nextKey, current.key)
@@ -78,10 +91,39 @@ export function findMovementPath(state: PlayerState, explored: Map<string, Explo
   return { path: null, reason: 'NO_ROUTE' }
 }
 
+export function reachableMovementDestinations(state: PlayerState, explored: Map<string, ExploredCell>, object: WorldObject, plan?: CommandPlan): Position[] {
+  if (!object.id || !object.controlled || !object.position || (object.kind !== 'UNIT' && object.kind !== 'CORE')) return []
+  const context = createNavigationContext(state, explored)
+  const projectedCounts = projectedEntityCounts(context, plan, object.id)
+  const canEnter = (position: Position) => {
+    const key = positionKey(position)
+    const kind = terrainKind(context, key)
+    if (!kind || kind === 'OBSTACLE' || (object.kind === 'CORE' && kind === 'RESOURCE')) return false
+    if (context.enemyCells.has(key)) return false
+    return (projectedCounts.get(key) ?? 0) < MAX_ENTITIES_PER_CELL
+  }
+
+  const queue: Position[] = [object.position]
+  const visited = new Set([positionKey(object.position)])
+  const destinations: Position[] = []
+  for (let index = 0; index < queue.length && visited.size <= MAX_SEARCHED_CELLS; index++) {
+    const current = queue[index]
+    for (const [dx, dy] of directions) {
+      const next: Position = [current[0] + dx, current[1] + dy]
+      const key = positionKey(next)
+      if (visited.has(key) || !canEnter(next)) continue
+      visited.add(key); queue.push(next); destinations.push(next)
+    }
+  }
+  return destinations
+}
+
 export function buildMovementRoutes(state: PlayerState, explored: Map<string, ExploredCell>, goals: MovementGoals, plan?: CommandPlan): MovementRoute[] {
   const routes: MovementRoute[] = []
+  const context = createNavigationContext(state, explored)
   for (const objectId of Object.keys(goals).sort()) {
-    const object = state.objects.find((candidate) => candidate.id === objectId && candidate.controlled && candidate.position && (candidate.kind === 'CORE' || candidate.kind === 'UNIT'))
+    const candidate = context.objectsById.get(objectId)
+    const object = candidate?.controlled && candidate.position && (candidate.kind === 'CORE' || candidate.kind === 'UNIT') ? candidate : undefined
     if (!object?.position) continue
     const destination = goals[objectId]
     if (object.kind === 'CORE' && object.state === 'MOVING' && object.destination) {
@@ -91,11 +133,11 @@ export function buildMovementRoutes(state: PlayerState, explored: Map<string, Ex
         continue
       }
       const fromDestination = { ...object, position: object.destination, state: 'NORMAL' as const }
-      const result = findMovementPath(state, explored, fromDestination, destination, plan)
+      const result = findMovementPathInContext(context, fromDestination, destination, plan)
       routes.push({ objectId, destination, path: result.path ? [...prefix, ...result.path.slice(1)] : prefix, blocked: !result.path })
       continue
     }
-    const result = findMovementPath(state, explored, object, destination, plan)
+    const result = findMovementPathInContext(context, object, destination, plan)
     routes.push({ objectId, destination, path: result.path ?? [object.position], blocked: !result.path })
   }
   return routes
@@ -107,15 +149,17 @@ export function applyAutonomousMovement(state: PlayerState, explored: Map<string
   const completed: string[] = []
   const removed: string[] = []
   const blocked: string[] = []
+  const context = createNavigationContext(state, explored)
 
   for (const objectId of Object.keys(goals).sort()) {
-    const object = state.objects.find((candidate) => candidate.id === objectId && candidate.controlled && candidate.position && (candidate.kind === 'CORE' || candidate.kind === 'UNIT'))
+    const candidate = context.objectsById.get(objectId)
+    const object = candidate?.controlled && candidate.position && (candidate.kind === 'CORE' || candidate.kind === 'UNIT') ? candidate : undefined
     if (!object?.position) { removed.push(objectId); continue }
     nextPlan = clearObjectAction(nextPlan, object)
     if (samePosition(object.position, goals[objectId])) { completed.push(objectId); continue }
     if (object.kind === 'CORE' && object.state === 'MOVING') continue
 
-    const result = findMovementPath(state, explored, object, goals[objectId], nextPlan)
+    const result = findMovementPathInContext(context, object, goals[objectId], nextPlan)
     if (!result.path || result.path.length < 2) { blocked.push(objectId); continue }
     const direction = directionTo(result.path[0], result.path[1])
     if (!direction) { blocked.push(objectId); continue }
@@ -152,15 +196,61 @@ function clearObjectAction(plan: CommandPlan, object: WorldObject): CommandPlan 
   return { ...plan, unit_actions: unitActions }
 }
 
-function knownTerrain(state: PlayerState, explored: Map<string, ExploredCell>) {
-  const terrain = new Map<string, ExploredCell['kind']>()
-  for (const [key, cell] of explored) terrain.set(key, cell.kind)
-  for (const key of computeVisibility(state)) if (!terrain.has(key)) terrain.set(key, 'EMPTY')
+function createNavigationContext(state: PlayerState, explored: Map<string, ExploredCell>): NavigationContext {
+  const terrainOverrides = new Map<string, ExploredCell['kind']>()
+  const enemyCells = new Set<string>()
+  const entityCounts = new Map<string, number>()
+  const objectsById = new Map<string, WorldObject>()
   for (const object of state.objects) {
-    if (object.kind !== 'OBSTACLE' && object.kind !== 'RESOURCE') continue
-    for (const position of object.positions ?? []) terrain.set(positionKey(position), object.kind)
+    if (object.id) objectsById.set(object.id, object)
+    if (object.kind === 'OBSTACLE' || object.kind === 'RESOURCE') {
+      for (const position of object.positions ?? []) terrainOverrides.set(positionKey(position), object.kind)
+      continue
+    }
+    if ((object.kind === 'CORE' || object.kind === 'UNIT') && object.position) {
+      const key = positionKey(object.position)
+      entityCounts.set(key, (entityCounts.get(key) ?? 0) + 1)
+      if (object.controlled === false) enemyCells.add(key)
+    }
   }
-  return terrain
+  return { explored, visible: computeVisibility(state), terrainOverrides, enemyCells, entityCounts, objectsById }
+}
+
+function terrainKind(context: NavigationContext, key: string): ExploredCell['kind'] | undefined {
+  return context.terrainOverrides.get(key) ?? context.explored.get(key)?.kind ?? (context.visible.has(key) ? 'EMPTY' : undefined)
+}
+
+function projectedEntityCounts(context: NavigationContext, plan: CommandPlan | undefined, excludedEntityId: string) {
+  const counts = new Map(context.entityCounts)
+  const excluded = context.objectsById.get(excludedEntityId)
+  if (excluded?.position) adjustCount(counts, positionKey(excluded.position), -1)
+  if (!plan) return counts
+  for (const [objectId, action] of Object.entries(plan.unit_actions)) {
+    if (objectId === excludedEntityId || action.type !== 'MOVE' || !action.direction) continue
+    const object = context.objectsById.get(objectId)
+    if (object?.kind !== 'UNIT' || !object.controlled || !object.position) continue
+    const destination = stepPosition(object.position, action.direction)
+    if (!destination) continue
+    adjustCount(counts, positionKey(object.position), -1)
+    adjustCount(counts, positionKey(destination), 1)
+  }
+  return counts
+}
+
+function adjustCount(counts: Map<string, number>, key: string, delta: number) {
+  const next = (counts.get(key) ?? 0) + delta
+  if (next) counts.set(key, next)
+  else counts.delete(key)
+}
+
+function stepPosition([x, y]: Position, direction: Direction): Position | null {
+  switch (direction) {
+    case 'UP': return [x, y - 1]
+    case 'RIGHT': return [x + 1, y]
+    case 'DOWN': return [x, y + 1]
+    case 'LEFT': return [x - 1, y]
+    default: return null
+  }
 }
 
 function rebuildPath(destinationKey: string, cameFrom: Map<string, string>, positions: Map<string, Position>) {

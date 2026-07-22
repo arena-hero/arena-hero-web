@@ -47,8 +47,9 @@ export interface MoveArrow { objectId: string; from: Position; to: Position; das
 export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes: MovementRoute[] = []): MoveArrow[] {
   const arrows: MoveArrow[] = []
   const routed = new Set(routes.map((route) => route.objectId))
+  const objectsById = new Map(state.objects.flatMap((object) => object.id ? [[object.id, object] as const] : []))
   for (const route of routes) {
-    const object = state.objects.find((candidate) => candidate.id === route.objectId)
+    const object = objectsById.get(route.objectId)
     const currentDestination = object ? currentStepDestination(object, plan) : null
     for (let index = 0; index < route.path.length - 1; index++) {
       const from = route.path[index], to = route.path[index + 1]

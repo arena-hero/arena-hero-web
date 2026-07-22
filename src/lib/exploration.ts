@@ -1,7 +1,7 @@
 import type { PlayerState, Position, WorldObject } from './types'
 import { computeVisibility, positionKey } from './visibility'
 
-export interface ExploredCell { position: Position; kind: 'EMPTY' | 'OBSTACLE' | 'RESOURCE'; amount?: number; capacity?: number }
+export interface ExploredCell { position: Position; kind: 'EMPTY' | 'OBSTACLE' | 'RESOURCE' }
 const STORE = 'cells'
 
 function openDB(namespace: string): Promise<IDBDatabase> {
@@ -41,14 +41,14 @@ export async function rememberVisible(namespace: string, state: PlayerState): Pr
     transaction.onerror = () => reject(transaction.error)
   })
   db.close()
-  return loadExplored(namespace)
+  return cells
 }
 
 export function visibleCells(objects: WorldObject[]): Map<string, ExploredCell> {
   const result = new Map<string, ExploredCell>()
   for (const object of objects) {
     if (object.kind === 'OBSTACLE') for (const position of object.positions ?? []) result.set(positionKey(position), { position, kind: 'OBSTACLE' })
-    if (object.kind === 'RESOURCE') for (const position of object.positions ?? []) result.set(positionKey(position), { position, kind: 'RESOURCE', amount: object.amount, capacity: object.capacity })
+    if (object.kind === 'RESOURCE') for (const position of object.positions ?? []) result.set(positionKey(position), { position, kind: 'RESOURCE' })
   }
   return result
 }

@@ -2,8 +2,11 @@ import type { PlayerState, Position, WorldObject } from './types'
 
 export const positionKey = ([x, y]: Position) => `${x},${y}`
 const radiusFor = (object: WorldObject) => object.kind === 'CORE' ? 5 : object.unit_type === 'WORKER' ? 3 : object.unit_type === 'VANGUARD' ? 4 : 5
+const visibilityCache = new WeakMap<PlayerState, Set<string>>()
 
 export function computeVisibility(state: PlayerState): Set<string> {
+  const cached = visibilityCache.get(state)
+  if (cached) return cached
   const obstacles = new Set<string>()
   for (const object of state.objects) if (object.kind === 'OBSTACLE') for (const position of object.positions ?? []) obstacles.add(positionKey(position))
   const visible = new Set<string>()
@@ -18,6 +21,7 @@ export function computeVisibility(state: PlayerState): Set<string> {
       }
     }
   }
+  visibilityCache.set(state, visible)
   return visible
 }
 

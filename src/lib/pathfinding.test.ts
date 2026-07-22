@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import type { ExploredCell } from './exploration'
-import { applyAutonomousMovement, findMovementPath, readMovementGoals } from './pathfinding'
+import { applyAutonomousMovement, findMovementPath, reachableMovementDestinations, readMovementGoals } from './pathfinding'
 import type { PlayerState, Position, WorldObject } from './types'
 import { positionKey } from './visibility'
 
 const unit: WorldObject = { kind: 'UNIT', id: 'unit', controlled: true, position: [0, 0], hp: 2, unit_type: 'WORKER' }
-const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 20, shield: 20, state: 'NORMAL' }
-const state = (objects: WorldObject[]): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, events: [], objects })
+const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
+const state = (objects: WorldObject[]): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, events: [], objects })
 const explored = (...positions: Position[]) => new Map<string, ExploredCell>(positions.map((position) => [positionKey(position), { position, kind: 'EMPTY' }]))
 
 describe('autonomous pathfinding', () => {
@@ -28,7 +28,7 @@ describe('autonomous pathfinding', () => {
   })
 
   it('allows Units through resource cells but keeps the Core off them', () => {
-    const resource: WorldObject = { kind: 'RESOURCE', positions: [[1, 0]], amount: 1, capacity: 5 }
+    const resource: WorldObject = { kind: 'RESOURCE', positions: [[1, 0]] }
     const known = explored([0, 0], [1, 0], [2, 0])
     expect(findMovementPath(state([unit, resource]), known, unit, [2, 0]).path).toEqual([[0, 0], [1, 0], [2, 0]])
     expect(findMovementPath(state([core, resource]), known, core, [2, 0]).path).not.toContainEqual([1, 0])
@@ -57,5 +57,15 @@ describe('autonomous pathfinding', () => {
   it('rejects unknown destinations and ignores malformed stored goals', () => {
     expect(findMovementPath(state([unit]), explored([0, 0]), unit, [8, 8]).reason).toBe('UNKNOWN_DESTINATION')
     expect(readMovementGoals('{"unit":[2,3],"bad":[1],"unsafe":[1.5,2]}')).toEqual({ unit: [2, 3] })
+  })
+
+  it('returns every connected legal explored destination for move selection', () => {
+    const blocked: WorldObject = { kind: 'OBSTACLE', positions: [[0, -1]] }
+    const enemy: WorldObject = { kind: 'UNIT', id: 'enemy', controlled: false, position: [-1, 0], hp: 2, unit_type: 'RANGER' }
+    const known = explored([0, 0], [1, 0], [2, 0], [0, 1], [1, 1], [0, -1], [-1, 0])
+    const destinations = reachableMovementDestinations(state([unit, blocked, enemy]), known, unit)
+    expect(destinations).toEqual(expect.arrayContaining([[1, 0], [0, 1], [2, 0], [1, 1]]))
+    expect(destinations).not.toContainEqual([0, -1])
+    expect(destinations).not.toContainEqual([-1, 0])
   })
 })

@@ -10,18 +10,12 @@ import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
 import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage'
 import { GitHubPage } from '../pages/auth/GitHubPage'
 import { ArenaPage } from '../pages/ArenaPage'
-import { DocsPage } from '../pages/DocsPage'
 
 function RequireAuth() {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return <div className="cosmic-bg grid min-h-dvh place-items-center"><LoaderCircle className="animate-spin text-cyan-signal" aria-label="Loading" /></div>
   return user ? <AppShell /> : <Navigate to="/login" state={{ from: location }} replace />
-}
-
-function LegacyRulesRedirect() {
-  const location = useLocation()
-  return <Navigate to={`/docs${location.hash}`} replace />
 }
 
 export default function App() {
@@ -37,8 +31,6 @@ export default function App() {
     {import.meta.env.DEV && <Route path="/demo" element={<div className="cosmic-bg min-h-dvh pt-0"><ArenaPage demo /></div>} />}
     <Route element={<RequireAuth />}>
       <Route path="/arena" element={<ArenaPage />} />
-      <Route path="/docs" element={<DocsPage />} />
-      <Route path="/rules" element={<LegacyRulesRedirect />} />
     </Route>
     <Route path="*" element={<Navigate to="/arena" replace />} />
   </Routes>
