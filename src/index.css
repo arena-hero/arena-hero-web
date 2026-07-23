@@ -47,6 +47,9 @@ button, [role="button"] { cursor: pointer; }
 .input { @apply min-h-12 w-full rounded-gold border border-white/10 bg-white/[.035] px-4 text-base text-zinc-100 placeholder:text-zinc-600 transition-colors duration-200 hover:border-violet-cosmic/35 focus:border-cyan-signal/55 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950; }
 .primary-button { @apply min-h-11 rounded-gold bg-cyan-signal px-4 font-display text-sm font-semibold text-space-950 transition-colors duration-200 hover:bg-signal-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
 .secondary-button { @apply min-h-11 rounded-gold border border-white/10 bg-white/[.035] px-4 text-sm font-medium text-zinc-200 transition-colors duration-200 hover:border-violet-cosmic/30 hover:bg-indigo-deep/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-signal/55 focus-visible:ring-offset-2 focus-visible:ring-offset-space-950 disabled:cursor-not-allowed disabled:opacity-40; }
+.linux-do-auth-link { transition: background-color .2s ease, transform .2s ease; }
+.linux-do-auth-link:hover { background-color: #ffc13d !important; }
+.linux-do-auth-link:active { transform: translateY(1px); }
 
 /* Marketing page */
 .landing-page {

@@ -91,6 +91,10 @@ export interface Session {
   username: string
 }
 
+export interface AuthOptions {
+  email_registration_enabled: boolean
+}
+
 export interface PlayerStats {
   damage_dealt: number
   damage_received: number

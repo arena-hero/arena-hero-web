@@ -1,14 +1,11 @@
 import { render, screen } from '@testing-library/react'
-import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
 import { api } from '../../lib/api'
 import i18n from '../../lib/i18n'
-import { LoginPage } from './LoginPage'
+import { RegisterPage } from './RegisterPage'
 
-vi.mock('../../context/AuthContext', () => ({ useAuth: () => ({ login: vi.fn() }) }))
-
-describe('LoginPage', () => {
+describe('RegisterPage', () => {
   beforeEach(() => {
     vi.spyOn(api, 'authOptions').mockResolvedValue({ email_registration_enabled: false })
   })
@@ -17,25 +14,12 @@ describe('LoginPage', () => {
     void i18n.changeLanguage('en')
   })
 
-  it('lets the operator reveal and hide the password', async () => {
-    vi.mocked(api.authOptions).mockResolvedValue({ email_registration_enabled: true })
-    const user = userEvent.setup()
-    render(<MemoryRouter><LoginPage /></MemoryRouter>)
-
-    const password = await screen.findByLabelText('Password')
-    expect(password).toHaveAttribute('type', 'password')
-
-    await user.click(screen.getByRole('button', { name: 'Show password' }))
-    expect(password).toHaveAttribute('type', 'text')
-    expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
-  })
-
-  it('offers OAuth only when email registration is disabled', () => {
-    const { container } = render(<MemoryRouter><LoginPage /></MemoryRouter>)
+  it('hides email registration and offers OAuth account creation', () => {
+    const { container } = render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
     expect(screen.queryByLabelText('Email')).not.toBeInTheDocument()
     expect(screen.queryByLabelText('Password')).not.toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: 'Forgot password?' })).not.toBeInTheDocument()
+    expect(screen.queryByLabelText('Confirm password')).not.toBeInTheDocument()
     const github = screen.getByRole('link', { name: 'Continue with GitHub' })
     const linuxDO = screen.getByRole('link', { name: 'Continue with LINUX DO' })
     expect(linuxDO).toHaveAttribute('href', '/api/v1/auth/linux-do/start')
@@ -44,6 +28,14 @@ describe('LoginPage', () => {
     expect(github).toHaveAttribute('href', '/api/v1/auth/github/start')
     expect(github.compareDocumentPosition(linuxDO) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(container.querySelector('.github-logo')).toBeInTheDocument()
-    expect(container.querySelector('.lucide-git-fork')).not.toBeInTheDocument()
+  })
+
+  it('shows the email form when email registration is enabled', async () => {
+    vi.mocked(api.authOptions).mockResolvedValue({ email_registration_enabled: true })
+    render(<MemoryRouter><RegisterPage /></MemoryRouter>)
+
+    expect(await screen.findByLabelText('Email')).toBeInTheDocument()
+    expect(screen.getByLabelText('Password')).toBeInTheDocument()
+    expect(screen.getByLabelText('Confirm password')).toBeInTheDocument()
   })
 })

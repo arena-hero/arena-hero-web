@@ -1,19 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router-dom'
+import { api } from '../../lib/api'
 import i18n from '../../lib/i18n'
 import { RegisterPage } from './RegisterPage'
 import { ResetPasswordPage } from './ResetPasswordPage'
 
 describe('password confirmation', () => {
-  afterEach(() => void i18n.changeLanguage('en'))
+  afterEach(() => {
+    vi.restoreAllMocks()
+    void i18n.changeLanguage('en')
+  })
 
   it('requires matching passwords when registering', async () => {
+    vi.spyOn(api, 'authOptions').mockResolvedValue({ email_registration_enabled: true })
     const user = userEvent.setup()
     render(<MemoryRouter><RegisterPage /></MemoryRouter>)
 
-    await user.type(screen.getByLabelText('Email'), 'player@example.com')
+    await user.type(await screen.findByLabelText('Email'), 'player@example.com')
     await user.type(screen.getByLabelText('Username'), 'player_one')
     await user.type(screen.getByLabelText('Password'), 'correct-horse-1')
     await user.type(screen.getByLabelText('Confirm password'), 'correct-horse-2')

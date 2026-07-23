@@ -12,6 +12,7 @@ const VerifyEmailPage = lazy(() => import('../pages/auth/VerifyEmailPage').then(
 const ForgotPasswordPage = lazy(() => import('../pages/auth/ForgotPasswordPage').then((module) => ({ default: module.ForgotPasswordPage })))
 const ResetPasswordPage = lazy(() => import('../pages/auth/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })))
 const GitHubPage = lazy(() => import('../pages/auth/GitHubPage').then((module) => ({ default: module.GitHubPage })))
+const LinuxDOPage = lazy(() => import('../pages/auth/GitHubPage').then((module) => ({ default: module.LinuxDOPage })))
 const ArenaPage = lazy(() => import('../pages/ArenaPage').then((module) => ({ default: module.ArenaPage })))
 
 function RequireAuth() {
@@ -31,6 +32,7 @@ export default function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/auth/github" element={<GitHubPage />} />
+      <Route path="/auth/linux-do" element={<LinuxDOPage />} />
     </Route>
     {import.meta.env.DEV && <Route path="/demo" element={<div className="cosmic-bg min-h-dvh pt-0"><ArenaPage demo /></div>} />}
     <Route element={<RequireAuth />}>
