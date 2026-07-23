@@ -26,7 +26,6 @@ const ERROR_KEYS = {
   COMMAND_WINDOW_CLOSED: 'errors.commandWindowClosed',
   TICK_MISMATCH: 'errors.tickMismatch',
   INVALID_COMMAND: 'errors.invalidCommand',
-  COMMAND_SUPERSEDED: 'errors.commandSuperseded',
   IDEMPOTENCY_CONFLICT: 'errors.commandConflict',
   PLAYER_NOT_READY: 'errors.playerNotReady',
   STATE_INVALID: 'errors.stateInvalid',

@@ -47,7 +47,7 @@ const resources = {
       invalidOrExpiredToken: 'This link is invalid or has expired. Please request a new one.', passwordResetFailed: 'We could not reset your password. Please request a new reset link.',
       githubUnavailable: 'GitHub sign-in is not available right now.', oauthFailed: 'GitHub sign-in could not be completed.', oauthLinkRequired: 'Sign in first to link this GitHub account.', linuxDOUnavailable: 'LINUX DO sign-in is not available right now.', linuxDOOAuthFailed: 'LINUX DO sign-in could not be completed.',
       sessionExpired: 'Your session has expired. Please sign in again.', apiKeyFailed: 'We could not create the API key. Please try again.', apiKeyNotFound: 'That API key no longer exists.', statsUnavailable: 'Statistics are temporarily unavailable.',
-      commandWindowClosed: 'The command window has closed. Wait for the next Tick.', tickMismatch: 'The Tick changed before this order arrived. Please submit it again.', invalidCommand: 'This order is not valid.', commandSuperseded: 'A newer order has already replaced this one.', commandConflict: 'This order conflicts with an earlier request.', playerNotReady: 'Your player is not ready yet. Please wait for the next Tick.', stateInvalid: 'The game state could not be read. Reconnecting…',
+      commandWindowClosed: 'The command window has closed. Wait for the next Tick.', tickMismatch: 'The Tick changed before this order arrived. Please submit it again.', invalidCommand: 'This order is not valid.', commandConflict: 'This order conflicts with an earlier request.', playerNotReady: 'Your player is not ready yet. Please wait for the next Tick.', stateInvalid: 'The game state could not be read. Reconnecting…',
       generic: 'Something went wrong. Please try again.',
     },
     game: {
@@ -115,7 +115,7 @@ const resources = {
       invalidOrExpiredToken: '这个链接无效或已经过期，请重新申请。', passwordResetFailed: '密码重置失败，请重新申请重置链接。',
       githubUnavailable: 'GitHub 登录暂时不可用。', oauthFailed: '未能完成 GitHub 登录。', oauthLinkRequired: '请先登录，再关联这个 GitHub 账号。', linuxDOUnavailable: 'LINUX DO 登录暂时不可用。', linuxDOOAuthFailed: '未能完成 LINUX DO 登录。',
       sessionExpired: '登录状态已过期，请重新登录。', apiKeyFailed: 'API 密钥创建失败，请重试。', apiKeyNotFound: '该 API 密钥已经不存在。', statsUnavailable: '统计数据暂时不可用。',
-      commandWindowClosed: '指令窗口已经关闭，请等待下一个 Tick。', tickMismatch: '提交期间 Tick 已变化，请重新发送指令。', invalidCommand: '这条指令无效。', commandSuperseded: '这条指令已被更新的指令覆盖。', commandConflict: '这条指令与之前的请求冲突。', playerNotReady: '玩家尚未就绪，请等待下一个 Tick。', stateInvalid: '无法读取游戏状态，正在重新连接……',
+      commandWindowClosed: '指令窗口已经关闭，请等待下一个 Tick。', tickMismatch: '提交期间 Tick 已变化，请重新发送指令。', invalidCommand: '这条指令无效。', commandConflict: '这条指令与之前的请求冲突。', playerNotReady: '玩家尚未就绪，请等待下一个 Tick。', stateInvalid: '无法读取游戏状态，正在重新连接……',
       generic: '操作失败，请稍后重试。',
     },
     game: {
