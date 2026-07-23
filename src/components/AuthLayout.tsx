@@ -1,11 +1,24 @@
-import { Outlet } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import { Link, Outlet } from 'react-router-dom'
 import { LanguageToggle } from './LanguageToggle'
 import { Logo } from './Logo'
 
 export function AuthLayout() {
-  return <main className="cosmic-bg relative grid min-h-dvh place-items-center overflow-hidden px-4 py-20">
-    <div className="absolute left-5 top-5"><Logo /></div><div className="absolute right-4 top-4"><LanguageToggle /></div>
-    <div className="absolute inset-x-0 top-[42%] h-px bg-gradient-to-r from-transparent via-cyan-signal/20 to-transparent" />
-    <Outlet />
+  const { t } = useTranslation()
+  return <main className="auth-shell">
+    <header className="auth-header">
+      <Link to="/" className="focus-ring rounded-gold-sm" aria-label={t('auth.backHome')}><Logo /></Link>
+      <LanguageToggle />
+    </header>
+    <section className="auth-story" aria-label={t('auth.storyLabel')}>
+      <div className="auth-story-copy">
+        <h2>{t('auth.storyTitle')}</h2>
+        <p>{t('auth.storyBody')}</p>
+      </div>
+      <div className="auth-story-media">
+        <img src="/assets/landing/arena-gameplay.jpg" alt={t('auth.storyAlt')} width="1020" height="720" fetchPriority="high" />
+      </div>
+    </section>
+    <section className="auth-form-region"><Outlet /></section>
   </main>
 }

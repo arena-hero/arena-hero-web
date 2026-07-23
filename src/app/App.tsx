@@ -1,15 +1,18 @@
+import { lazy, Suspense } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
 import { LoaderCircle } from 'lucide-react'
 import { useAuth } from '../context/AuthContext'
-import { AppShell } from '../components/AppShell'
-import { AuthLayout } from '../components/AuthLayout'
-import { LoginPage } from '../pages/auth/LoginPage'
-import { RegisterPage } from '../pages/auth/RegisterPage'
-import { VerifyEmailPage } from '../pages/auth/VerifyEmailPage'
-import { ForgotPasswordPage } from '../pages/auth/ForgotPasswordPage'
-import { ResetPasswordPage } from '../pages/auth/ResetPasswordPage'
-import { GitHubPage } from '../pages/auth/GitHubPage'
-import { ArenaPage } from '../pages/ArenaPage'
+import { LandingPage } from '../pages/LandingPage'
+
+const AppShell = lazy(() => import('../components/AppShell').then((module) => ({ default: module.AppShell })))
+const AuthLayout = lazy(() => import('../components/AuthLayout').then((module) => ({ default: module.AuthLayout })))
+const LoginPage = lazy(() => import('../pages/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
+const RegisterPage = lazy(() => import('../pages/auth/RegisterPage').then((module) => ({ default: module.RegisterPage })))
+const VerifyEmailPage = lazy(() => import('../pages/auth/VerifyEmailPage').then((module) => ({ default: module.VerifyEmailPage })))
+const ForgotPasswordPage = lazy(() => import('../pages/auth/ForgotPasswordPage').then((module) => ({ default: module.ForgotPasswordPage })))
+const ResetPasswordPage = lazy(() => import('../pages/auth/ResetPasswordPage').then((module) => ({ default: module.ResetPasswordPage })))
+const GitHubPage = lazy(() => import('../pages/auth/GitHubPage').then((module) => ({ default: module.GitHubPage })))
+const ArenaPage = lazy(() => import('../pages/ArenaPage').then((module) => ({ default: module.ArenaPage })))
 
 function RequireAuth() {
   const { user, loading } = useAuth()
@@ -19,7 +22,8 @@ function RequireAuth() {
 }
 
 export default function App() {
-  return <Routes>
+  return <Suspense fallback={<div className="cosmic-bg grid min-h-dvh place-items-center"><div className="h-px w-28 overflow-hidden bg-white/10"><span className="block h-full w-1/2 animate-pulse bg-cyan-signal" /></div></div>}><Routes>
+    <Route path="/" element={<LandingPage />} />
     <Route element={<AuthLayout />}>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
@@ -32,6 +36,6 @@ export default function App() {
     <Route element={<RequireAuth />}>
       <Route path="/arena" element={<ArenaPage />} />
     </Route>
-    <Route path="*" element={<Navigate to="/arena" replace />} />
-  </Routes>
+    <Route path="*" element={<Navigate to="/" replace />} />
+  </Routes></Suspense>
 }
