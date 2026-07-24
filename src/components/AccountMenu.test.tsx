@@ -26,6 +26,7 @@ describe('AccountMenu', () => {
     expect(accountButton).toHaveTextContent('pilot')
     await user.click(accountButton)
     expect(screen.getByRole('menuitem', { name: 'Arena' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Training' })).toBeInTheDocument()
     expect(screen.queryByRole('menuitem', { name: 'Documentation' })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Language' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()

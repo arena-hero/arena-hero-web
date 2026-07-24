@@ -1,8 +1,9 @@
-import { BarChart3, ChevronDown, Gamepad2, GitFork, KeyRound, LogOut } from 'lucide-react'
+import { BarChart3, ChevronDown, Gamepad2, GitFork, GraduationCap, KeyRound, LogOut } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
+import { startTutorial } from '../lib/tutorialProgress'
 import { LanguageToggle } from './LanguageToggle'
 import { AccountDialog } from './account/AccountDialog'
 import { APIKeysDialogContent } from './account/APIKeysDialogContent'
@@ -22,6 +23,12 @@ export function AccountMenu() {
   const closeDialog = useCallback(() => setDialog(null), [])
   const signOut = async () => { await logout(); navigate('/login') }
   const showDialog = (next: Exclude<AccountDialogType, null>) => { setOpen(false); setDialog(next) }
+  const replayTutorial = () => {
+    if (!user) return
+    startTutorial(user.username)
+    setOpen(false)
+    navigate('/tutorial')
+  }
 
   useEffect(() => {
     if (!open) return
@@ -51,6 +58,7 @@ export function AccountMenu() {
       <div className="border-b border-white/[.07] px-3 pb-3 pt-2"><p className="text-sm font-medium text-zinc-200">{user?.username}</p><p className="mt-1 truncate text-[10px] text-zinc-600">{user?.email}</p></div>
       <nav aria-label="Account navigation" className="mt-1">
         <NavLink role="menuitem" to="/arena" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><Gamepad2 size={16} />{t('nav.arena')}</NavLink>
+        <button role="menuitem" type="button" onClick={replayTutorial} className="flex min-h-11 w-full items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><GraduationCap size={16} />{t('nav.tutorial')}</button>
         {dialogItems.map(({ id, label, icon: Icon }) => <button role="menuitem" key={id} type="button" onClick={() => showDialog(id)} className="flex min-h-11 w-full items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><Icon size={16} />{label}</button>)}
       </nav>
       <LanguageToggle className="w-full" />

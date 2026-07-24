@@ -37,6 +37,8 @@ interface Props {
   onMoveDestination: (position: Position) => void
   onCenterBeacon: () => void
   onAnchorChange: (anchor: MapAnchor | null) => void
+  highlightPositions?: Position[]
+  preferredSelectionId?: string
 }
 
 export interface RouteDestination { objectId: string; position: Position; blocked: boolean; selectable?: boolean; immediate?: boolean }
@@ -60,7 +62,7 @@ interface CachedBeaconSprite { canvas: HTMLCanvasElement; size: number }
 const unitSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedUnitSprite>>()
 const beaconSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedBeaconSprite>>()
 
-export function WorldCanvas({ state, explored, selectedId, targeting, destinationSelecting, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, centerPosition, centerRequest, zoomRequest, onSelect, onTarget, onMoveDestination, onCenterBeacon, onAnchorChange }: Props) {
+export function WorldCanvas({ state, explored, selectedId, targeting, destinationSelecting, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, centerPosition, centerRequest, zoomRequest, onSelect, onTarget, onMoveDestination, onCenterBeacon, onAnchorChange, highlightPositions = [], preferredSelectionId }: Props) {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -254,7 +256,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const worldToScreen = ([x, y]: Position) => ({ left: size.width / 2 + (x - camera.x) * camera.cell, top: size.height / 2 + (y - camera.y) * camera.cell })
   const choose = (position: Position) => {
     if (destinationSelecting) { onMoveDestination(position); return }
-    const candidates = entityGroupsByPosition.get(positionKey(position)) ?? []
+    const candidates = prioritizeSelectionCandidates(entityGroupsByPosition.get(positionKey(position)) ?? [], preferredSelectionId)
     if (targeting) { const target = candidates.find((object) => object.id && targetableIds.has(object.id)); if (target) onTarget(target); return }
     const features = mapFeaturesAt(position, state, explored)
     const choices: ({ key: string; type: 'object'; object: WorldObject } | { key: string; type: 'feature'; feature: MapFeatureView })[] = [
@@ -279,6 +281,16 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
       onPointerUp={(event) => { if (drag.current && !drag.current.moved) choose(screenToWorld(event.clientX, event.clientY)); drag.current = null }}
       onPointerCancel={() => { drag.current = null }}
     />
+    {highlightPositions.map((position) => {
+      const point = worldToScreen(position)
+      const diameter = Math.max(30, camera.cell * .78)
+      return <span
+        key={positionKey(position)}
+        aria-hidden="true"
+        className="tutorial-map-highlight pointer-events-none absolute z-10 rounded-gold"
+        style={{ left: point.left, top: point.top, width: diameter, height: diameter, transform: 'translate(-50%, -50%)' }}
+      />
+    })}
     {visibleShotMarkers.map((marker) => {
       const from = worldToScreen(marker.from), to = worldToScreen(marker.to), dx = to.left - from.left, dy = to.top - from.top, length = Math.hypot(dx, dy)
       const ux = dx / length, uy = dy / length, px = -uy, py = ux, side = dx > 0 ? -1 : dx < 0 ? 1 : dy > 0 ? -1 : 1
@@ -348,7 +360,11 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
   const toScreen = ([x, y]: Position) => [size.width / 2 + (x - camera.x) * camera.cell, size.height / 2 + (y - camera.y) * camera.cell] as const
   let beaconPoint = toScreen(state.champion_beacon.position)
   let beaconAttached = false
+  const beaconCarried = state.champion_beacon.status === 'CARRIED'
   const beaconBuffActive = state.champion_beacon.status === 'CARRIED' && state.objects.some((object) => object.controlled === true && object.id === state.champion_beacon.carrier_id)
+  // A grounded Beacon is terrain-sized, so paint it below entities sharing its
+  // cell. A carried Beacon stays above its carrier as a compact attachment.
+  if (!beaconCarried) drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, false, beaconSprite)
   for (const objects of entityGroups) {
     const selected = objects.find((object) => object.id === selectedId)
     const ordered = selected ? [...objects.filter((object) => object !== selected), selected] : objects
@@ -360,7 +376,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
       const [baseX, baseY] = toScreen(position)
       return { object, x: baseX + offset, y: baseY - offset }
     })
-    const beaconCarrier = state.champion_beacon.status === 'CARRIED' ? placements.find(({ object }) => object.id === state.champion_beacon.carrier_id) : undefined
+    const beaconCarrier = beaconCarried ? placements.find(({ object }) => object.id === state.champion_beacon.carrier_id) : undefined
     if (beaconCarrier) {
       beaconPoint = [beaconCarrier.x + camera.cell * .22, beaconCarrier.y - camera.cell * .22]
       beaconAttached = true
@@ -384,7 +400,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
       drawHealthBar(ctx, meterX, healthY, camera.cell, hp, maxHp, color)
     }
   }
-  drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, beaconAttached, beaconSprite)
+  if (beaconCarried) drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, beaconAttached, beaconSprite)
   for (const marker of resolvedSweeps) drawResolvedSweep(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, sweepProgress)
   for (const marker of resolvedShots) drawResolvedShot(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, shotProgress, marker.hit)
 }
@@ -405,6 +421,13 @@ function groupEntitiesByPosition(objects: WorldObject[]) {
     else grouped.set(key, [object])
   }
   return grouped
+}
+
+export function prioritizeSelectionCandidates(candidates: WorldObject[], preferredSelectionId?: string) {
+  if (!preferredSelectionId) return candidates
+  const preferred = candidates.find((object) => object.id === preferredSelectionId)
+  if (!preferred) return candidates
+  return [preferred, ...candidates.filter((object) => object !== preferred)]
 }
 
 function groupRouteDestinations(destinations: RouteDestination[]) {

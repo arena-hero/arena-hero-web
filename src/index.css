@@ -50,6 +50,18 @@ button, [role="button"] { cursor: pointer; }
 .linux-do-auth-link { transition: background-color .2s ease, transform .2s ease; }
 .linux-do-auth-link:hover { background-color: #ffc13d !important; }
 .linux-do-auth-link:active { transform: translateY(1px); }
+.tutorial-map-highlight {
+  border: 1px solid rgba(246, 196, 83, .88);
+  box-shadow: inset 0 0 0 2px rgba(246, 196, 83, .12), 0 0 0 5px rgba(246, 196, 83, .09);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .tutorial-map-highlight { animation: tutorial-ripple 1.35s cubic-bezier(.16, 1, .3, 1) infinite; }
+}
+@keyframes tutorial-ripple {
+  0% { opacity: .55; transform: translate(-50%, -50%) scale(.86); }
+  55% { opacity: 1; }
+  100% { opacity: .25; transform: translate(-50%, -50%) scale(1.16); }
+}
 
 /* Marketing page */
 .landing-page {
