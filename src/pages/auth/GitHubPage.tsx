@@ -1,7 +1,7 @@
 import { LoaderCircle } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { AuthCard, FormError, FormField } from '../../components/auth/AuthCard'
 import { api, APIError, setCSRF } from '../../lib/api'
 import { getErrorMessage } from '../../lib/errorMessage'
@@ -9,9 +9,12 @@ import { getErrorMessage } from '../../lib/errorMessage'
 type OAuthProvider = 'github' | 'linux-do'
 
 export function OAuthPage({ provider }: { provider: OAuthProvider }) {
-  const { t } = useTranslation(); const navigate = useNavigate(); const fragment = location.hash.slice(1); const params = new URLSearchParams(fragment); const signupToken = params.get('signup_token'); const success = params.get('success') === '1'; const csrf = params.get('csrf_token'); const callbackError = params.get('error')
+  const { t } = useTranslation(); const navigate = useNavigate(); const [fragment] = useState(() => location.hash.slice(1)); const params = useMemo(() => new URLSearchParams(fragment), [fragment]); const signupToken = params.get('signup_token'); const success = params.get('success') === '1'; const csrf = params.get('csrf_token'); const callbackError = params.get('error')
   const isGitHub = provider === 'github'
   const [username, setUsername] = useState(params.get('username') ?? ''); const [error, setError] = useState(callbackError ? getErrorMessage(callbackError) : ''); const [busy, setBusy] = useState(success)
+  useEffect(() => {
+    if (window.location.hash) window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+  }, [])
   useEffect(() => {
     if (csrf) setCSRF(csrf)
     if (!success) return

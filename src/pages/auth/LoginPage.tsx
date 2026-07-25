@@ -1,7 +1,7 @@
 import { Eye, EyeOff, LoaderCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router'
 import { AuthCard, AuthDivider, FormError, FormField, GitHubAuthLink, LinuxDOAuthLink } from '../../components/auth/AuthCard'
 import { useAuth } from '../../context/AuthContext'
 import { useEmailRegistrationEnabled } from '../../hooks/useAuthOptions'

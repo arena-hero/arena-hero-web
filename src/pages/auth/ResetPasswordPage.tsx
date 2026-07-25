@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router'
 import { AuthCard, FormError, FormField } from '../../components/auth/AuthCard'
 import { api } from '../../lib/api'
 import { getErrorMessage } from '../../lib/errorMessage'

@@ -1,7 +1,7 @@
 import { CheckCircle2, LoaderCircle, XCircle } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router'
 import { AuthCard } from '../../components/auth/AuthCard'
 import { api } from '../../lib/api'
 

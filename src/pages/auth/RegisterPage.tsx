@@ -1,7 +1,7 @@
 import { LoaderCircle } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { AuthCard, AuthDivider, FormError, FormField, GitHubAuthLink, LinuxDOAuthLink } from '../../components/auth/AuthCard'
 import { useEmailRegistrationEnabled } from '../../hooks/useAuthOptions'
 import { api } from '../../lib/api'

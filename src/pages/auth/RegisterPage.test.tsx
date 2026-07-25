@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter } from 'react-router'
 import { api } from '../../lib/api'
 import i18n from '../../lib/i18n'
 import { RegisterPage } from './RegisterPage'

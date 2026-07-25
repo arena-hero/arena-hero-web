@@ -1,7 +1,7 @@
 import { BarChart3, ChevronDown, Gamepad2, GitFork, GraduationCap, KeyRound, LogOut } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { NavLink, useNavigate } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router'
 import { useAuth } from '../context/AuthContext'
 import { startTutorial } from '../lib/tutorialProgress'
 import { LanguageToggle } from './LanguageToggle'

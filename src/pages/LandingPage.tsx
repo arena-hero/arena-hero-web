@@ -1,6 +1,6 @@
 import { ArrowRight, Bot, ChevronRight, Crosshair } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { Link } from 'react-router-dom'
+import { Link } from 'react-router'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { Logo } from '../components/Logo'
 import { useAuth } from '../context/AuthContext'
