@@ -6,8 +6,12 @@ import { AuthCard } from '../../components/auth/AuthCard'
 import { api } from '../../lib/api'
 
 export function VerifyEmailPage() {
-  const { t } = useTranslation(); const [params] = useSearchParams(); const [status, setStatus] = useState<'busy' | 'done' | 'error'>('busy')
-  useEffect(() => { const token = params.get('token'); if (!token) { setStatus('error'); return } void api.verifyEmail(token).then(() => setStatus('done')).catch(() => setStatus('error')) }, [params])
+  const { t } = useTranslation(); const [params, setParams] = useSearchParams(); const [token] = useState(() => new URLSearchParams(window.location.hash.slice(1)).get('token') ?? params.get('token') ?? ''); const [status, setStatus] = useState<'busy' | 'done' | 'error'>('busy')
+  useEffect(() => {
+    if (params.has('token')) { const scrubbed = new URLSearchParams(params); scrubbed.delete('token'); setParams(scrubbed, { replace: true }) }
+    if (new URLSearchParams(window.location.hash.slice(1)).has('token')) window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search)
+  }, [params, setParams])
+  useEffect(() => { if (!token) { setStatus('error'); return } void api.verifyEmail(token).then(() => setStatus('done')).catch(() => setStatus('error')) }, [token])
   return <AuthCard eyebrow={t('auth.identityCheck')} title={t('auth.verifyTitle')}>
     <div className="flex flex-col items-center py-6 text-center">
       {status === 'busy' && <><LoaderCircle className="mb-4 animate-spin text-cyan-signal" /><p className="text-zinc-400">{t('auth.verifying')}</p></>}

@@ -27,4 +27,17 @@ describe('manual command API', () => {
     expect(headers.get('X-CSRF-Token')).toBe('csrf-test')
     expect(JSON.parse(init?.body as string)).toEqual({})
   })
+
+  it('starts GitHub linking with a CSRF-protected POST', async () => {
+    setCSRF('csrf-test')
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ authorization_url: 'https://github.com/login/oauth/authorize?state=opaque' }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    await api.startGitHubLink()
+
+    const [path, init] = fetchMock.mock.calls[0]
+    const headers = new Headers(init?.headers)
+    expect(path).toBe('/api/v1/auth/github/link/start')
+    expect(init?.method).toBe('POST')
+    expect(headers.get('X-CSRF-Token')).toBe('csrf-test')
+  })
 })

@@ -42,12 +42,12 @@ const resources = {
       footer: 'A persistent tactical world for human players and local Agents.',
     },
     errors: {
-      emailNotVerified: 'Please verify your email before signing in.', invalidCredentials: 'The email or password is incorrect.',
+      emailNotVerified: 'Please verify your email before signing in.', invalidCredentials: 'The email or password is incorrect.', loginRateLimited: 'Too many failed sign-in attempts. Wait five minutes and try again.',
       identityAlreadyExists: 'That email or username is already registered.', registrationFailed: 'We could not create your account. Please check your details and try again.', emailRegistrationDisabled: 'Email registration is currently closed. Continue with an identity provider.',
       invalidOrExpiredToken: 'This link is invalid or has expired. Please request a new one.', passwordResetFailed: 'We could not reset your password. Please request a new reset link.',
       githubUnavailable: 'GitHub sign-in is not available right now.', oauthFailed: 'GitHub sign-in could not be completed.', oauthLinkRequired: 'Sign in first to link this GitHub account.', linuxDOUnavailable: 'LINUX DO sign-in is not available right now.', linuxDOOAuthFailed: 'LINUX DO sign-in could not be completed.',
-      sessionExpired: 'Your session has expired. Please sign in again.', apiKeyFailed: 'We could not create the API key. Please try again.', apiKeyNotFound: 'That API key no longer exists.', statsUnavailable: 'Statistics are temporarily unavailable.',
-      commandWindowClosed: 'The command window has closed. Wait for the next Tick.', tickMismatch: 'The Tick changed before this order arrived. Please submit it again.', invalidCommand: 'This order is not valid.', commandConflict: 'This order conflicts with an earlier request.', playerNotReady: 'Your player is not ready yet. Please wait for the next Tick.', stateInvalid: 'The game state could not be read. Reconnecting…',
+      sessionExpired: 'Your session has expired. Please sign in again.', apiKeyFailed: 'We could not create the API key. Please try again.', apiKeyLimit: 'You already have the maximum of 20 active API keys.', apiKeyNotFound: 'That API key no longer exists.', statsUnavailable: 'Statistics are temporarily unavailable.',
+      commandWindowClosed: 'The command window has closed. Wait for the next Tick.', commandConcurrencyLimit: 'Too many command uploads are already in progress. Try again shortly.', tickMismatch: 'The Tick changed before this order arrived. Please submit it again.', invalidCommand: 'This order is not valid.', commandConflict: 'This order conflicts with an earlier request.', playerNotReady: 'Your player is not ready yet. Please wait for the next Tick.', stateInvalid: 'The game state could not be read. Reconnecting…',
       generic: 'Something went wrong. Please try again.',
     },
     game: {
@@ -137,12 +137,12 @@ const resources = {
       footer: '为真人玩家与本地 Agent 构建的永久战术世界。',
     },
     errors: {
-      emailNotVerified: '请先完成邮箱验证，再登录游戏。', invalidCredentials: '邮箱或密码不正确。',
+      emailNotVerified: '请先完成邮箱验证，再登录游戏。', invalidCredentials: '邮箱或密码不正确。', loginRateLimited: '登录失败次数过多，请等待五分钟后重试。',
       identityAlreadyExists: '该邮箱或用户名已被注册。', registrationFailed: '账号创建失败，请检查填写内容后重试。', emailRegistrationDisabled: '邮箱注册当前未开放，请使用第三方身份继续。',
       invalidOrExpiredToken: '这个链接无效或已经过期，请重新申请。', passwordResetFailed: '密码重置失败，请重新申请重置链接。',
       githubUnavailable: 'GitHub 登录暂时不可用。', oauthFailed: '未能完成 GitHub 登录。', oauthLinkRequired: '请先登录，再关联这个 GitHub 账号。', linuxDOUnavailable: 'LINUX DO 登录暂时不可用。', linuxDOOAuthFailed: '未能完成 LINUX DO 登录。',
-      sessionExpired: '登录状态已过期，请重新登录。', apiKeyFailed: 'API 密钥创建失败，请重试。', apiKeyNotFound: '该 API 密钥已经不存在。', statsUnavailable: '统计数据暂时不可用。',
-      commandWindowClosed: '指令窗口已经关闭，请等待下一个 Tick。', tickMismatch: '提交期间 Tick 已变化，请重新发送指令。', invalidCommand: '这条指令无效。', commandConflict: '这条指令与之前的请求冲突。', playerNotReady: '玩家尚未就绪，请等待下一个 Tick。', stateInvalid: '无法读取游戏状态，正在重新连接……',
+      sessionExpired: '登录状态已过期，请重新登录。', apiKeyFailed: 'API 密钥创建失败，请重试。', apiKeyLimit: '你已经达到 20 个有效 API 密钥的上限。', apiKeyNotFound: '该 API 密钥已经不存在。', statsUnavailable: '统计数据暂时不可用。',
+      commandWindowClosed: '指令窗口已经关闭，请等待下一个 Tick。', commandConcurrencyLimit: '正在上传的指令过多，请稍后重试。', tickMismatch: '提交期间 Tick 已变化，请重新发送指令。', invalidCommand: '这条指令无效。', commandConflict: '这条指令与之前的请求冲突。', playerNotReady: '玩家尚未就绪，请等待下一个 Tick。', stateInvalid: '无法读取游戏状态，正在重新连接……',
       generic: '操作失败，请稍后重试。',
     },
     game: {

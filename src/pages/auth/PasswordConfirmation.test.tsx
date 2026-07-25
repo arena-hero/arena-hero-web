@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter } from 'react-router'
@@ -10,6 +10,7 @@ import { ResetPasswordPage } from './ResetPasswordPage'
 describe('password confirmation', () => {
   afterEach(() => {
     vi.restoreAllMocks()
+    window.history.replaceState({}, '', '/')
     void i18n.changeLanguage('en')
   })
 
@@ -32,5 +33,19 @@ describe('password confirmation', () => {
     render(<MemoryRouter initialEntries={['/reset-password?token=test']}><ResetPasswordPage /></MemoryRouter>)
     expect(screen.getByLabelText('Password')).toHaveAttribute('autocomplete', 'new-password')
     expect(screen.getByLabelText('Confirm password')).toHaveAttribute('autocomplete', 'new-password')
+  })
+
+  it('captures a fragment reset token and removes it from browser history', async () => {
+    vi.spyOn(api, 'resetPassword').mockResolvedValue(undefined)
+    window.history.replaceState({}, '', '/reset-password#token=fragment-secret')
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={['/reset-password']}><ResetPasswordPage /></MemoryRouter>)
+
+    await waitFor(() => expect(window.location.hash).toBe(''))
+    await user.type(screen.getByLabelText('Password'), 'correct-horse-1')
+    await user.type(screen.getByLabelText('Confirm password'), 'correct-horse-1')
+    await user.click(screen.getByRole('button', { name: 'Set new password' }))
+
+    await waitFor(() => expect(api.resetPassword).toHaveBeenCalledWith('fragment-secret', 'correct-horse-1'))
   })
 })

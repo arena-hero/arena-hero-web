@@ -42,6 +42,10 @@ export const api = {
   resendVerification: (email: string) => request<{ accepted: boolean }>('/api/v1/auth/resend-verification', { method: 'POST', body: JSON.stringify({ email }) }),
   forgotPassword: (email: string) => request<{ accepted: boolean }>('/api/v1/auth/forgot-password', { method: 'POST', body: JSON.stringify({ email }) }),
   resetPassword: (token: string, password: string) => request<void>('/api/v1/auth/reset-password', { method: 'POST', body: JSON.stringify({ token, password }) }),
+  startGitHubLink: () => request<{ authorization_url: string }>('/api/v1/auth/github/link/start', {
+    method: 'POST',
+    headers: { 'X-CSRF-Token': getCSRF() },
+  }),
   logout: async () => {
     await request<void>('/api/v1/auth/logout', { method: 'POST', headers: { 'X-CSRF-Token': getCSRF() } })
     clearCSRF()
