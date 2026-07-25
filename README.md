@@ -7,7 +7,7 @@ npm install
 npm run dev
 ```
 
-Vite listens on `http://localhost:3000` and proxies `/api` to `http://localhost:8080`. The real client uses the session cookie, CSRF token, SSE game stream, and command endpoint. In development only, `/demo` opens a deterministic local arena without a backend.
+Vite listens on `http://localhost:3000` and proxies HTTP and WebSocket `/api` traffic to `http://localhost:8080`. The real client uses the session cookie, CSRF token, `/api/v1/game/ws` realtime connection, and command endpoint. It reconnects with bounded exponential backoff and restores the authoritative snapshot after disconnects. In development only, `/demo` opens a deterministic local arena without a backend.
 
 ```bash
 npm run test
