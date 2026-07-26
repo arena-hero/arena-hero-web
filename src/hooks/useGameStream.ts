@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { api, APIError } from '../lib/api'
+import { api, APIError, apiURL } from '../lib/api'
 import { demoReceipt, demoState } from '../lib/demo'
 import { isReceivedNotice, type CommandReceipts } from '../lib/commandPlans'
 import { loadExplored, rememberVisible, type ExploredCell } from '../lib/exploration'
@@ -14,7 +14,7 @@ const reconnectBaseMs = 250
 const reconnectMaxMs = 5_000
 
 function gameWebSocketURL() {
-  const url = new URL('/api/v1/game/ws', window.location.href)
+  const url = new URL(apiURL('/api/v1/game/ws'), window.location.href)
   url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
   return url.toString()
 }

@@ -1,5 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { api, setCSRF } from './api'
+import { api, apiURL, setCSRF } from './api'
+
+describe('API URL', () => {
+  it('keeps local development requests relative', () => {
+    expect(apiURL('/api/v1/me', '')).toBe('/api/v1/me')
+  })
+
+  it('uses the production API origin without a duplicate slash', () => {
+    expect(apiURL('/api/v1/me', 'https://api.arenahero.io/')).toBe('https://api.arenahero.io/api/v1/me')
+  })
+})
 
 describe('manual command API', () => {
   afterEach(() => vi.restoreAllMocks())

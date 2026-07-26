@@ -16,10 +16,14 @@ export const getCSRF = () => localStorage.getItem(csrfKey) ?? ''
 export const setCSRF = (token: string) => localStorage.setItem(csrfKey, token)
 export const clearCSRF = () => localStorage.removeItem(csrfKey)
 
+export function apiURL(path: string, baseURL = import.meta.env.VITE_API_BASE_URL ?? '') {
+  return `${baseURL.trim().replace(/\/+$/, '')}${path}`
+}
+
 async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers)
   if (init.body && !headers.has('Content-Type')) headers.set('Content-Type', 'application/json')
-  const response = await fetch(path, { ...init, headers, credentials: 'include' })
+  const response = await fetch(apiURL(path), { ...init, headers, credentials: 'include' })
   if (!response.ok) {
     const body = await response.json().catch(() => ({})) as { error?: string; message?: string }
     throw new APIError(body.error ?? 'REQUEST_FAILED', response.status, body.message)
