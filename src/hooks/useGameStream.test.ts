@@ -65,13 +65,27 @@ describe('useGameStream WebSocket transport', () => {
       socket.open()
       socket.message({ type: 'tick', data: 42 })
       socket.message({ type: 'state', data: demoState })
-      socket.message({ type: 'received', data: { tick: 42, source: 'MANUAL', received_at: '2026-07-26T00:00:00Z' } })
+      socket.message({
+        type: 'received',
+        data: {
+          tick: 42,
+          source: 'MANUAL',
+          received_at: '2026-07-26T00:00:00Z',
+          plan: {
+            tick: 42,
+            unit_actions: {
+              '00000000-0000-4000-8000-000000000002': { type: 'HARVEST' },
+            },
+          },
+        },
+      })
     })
 
     expect(result.current.tick).toBe(42)
     expect(result.current.state).toEqual(demoState)
     expect(result.current.phase).toBe('open')
     expect(result.current.receipts.MANUAL?.tick).toBe(42)
+    expect(result.current.receipts.MANUAL?.plan.unit_actions['00000000-0000-4000-8000-000000000002']?.type).toBe('HARVEST')
     unmount()
     expect(socket.close).toHaveBeenCalledWith(1000, 'component unmounted')
   })

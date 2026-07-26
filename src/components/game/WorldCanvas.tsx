@@ -52,6 +52,7 @@ const SELECTION_RIPPLE_MS = 900
 const SELECTED_GOLD = '#f6c453'
 const PRIMARY_BLUE = '#4591c5'
 const PRIMARY_BLUE_LIGHT = '#a8c8dd'
+const AGENT_VIOLET = '#8f91c7'
 const HOSTILE_CORAL = '#c66370'
 const RESOURCE_GREEN = '#76b889'
 const RESOURCE_GREEN_LIGHT = '#b2d2ba'
@@ -295,7 +296,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
       const from = worldToScreen(marker.from), to = worldToScreen(marker.to), dx = to.left - from.left, dy = to.top - from.top, length = Math.hypot(dx, dy)
       const ux = dx / length, uy = dy / length, px = -uy, py = ux, side = dx > 0 ? -1 : dx < 0 ? 1 : dy > 0 ? -1 : 1
       const iconSize = Math.max(19, camera.cell * .46), left = from.left + px * side * camera.cell * .31 + ux * camera.cell * .1, top = from.top + py * side * camera.cell * .31 + uy * camera.cell * .1
-      return <BowArrow key={marker.objectId} aria-hidden="true" size={iconSize} strokeWidth={1.8} style={{ left, top, transform: `translate(-50%, -50%) rotate(${Math.atan2(dy, dx) * 180 / Math.PI + 45}deg)` }} className="pointer-events-none absolute z-10 text-cyan-signal drop-shadow-[0_0_6px_rgba(69,145,197,.5)]" />
+      return <BowArrow key={marker.objectId} aria-hidden="true" size={iconSize} strokeWidth={1.8} style={{ left, top, transform: `translate(-50%, -50%) rotate(${Math.atan2(dy, dx) * 180 / Math.PI + 45}deg)` }} className={`pointer-events-none absolute z-10 ${marker.source === 'AGENT' ? 'text-violet-300 drop-shadow-[0_0_6px_rgba(143,145,199,.5)]' : 'text-cyan-signal drop-shadow-[0_0_6px_rgba(69,145,197,.5)]'}`} />
     })}
     <BeaconDirectionIndicator beacon={state.champion_beacon} camera={camera} viewport={size} onCenter={onCenterBeacon} />
     {inspectedFeatureView && featureAnchor && <MapFeatureInfo feature={inspectedFeatureView} anchor={featureAnchor} onClose={() => setInspectedFeature(null)} />}
@@ -349,9 +350,9 @@ function drawWorldBackground(ctx: CanvasRenderingContext2D, size: { width: numbe
   for (let y = minY - 3; y <= maxY + 3; y++) for (let x = minX - 3; x <= maxX + 3; x++) {
     const key = `${x},${y}`
     for (const destination of routeDestinations.get(key) ?? []) drawRouteDestination(ctx, toScreen(destination.position), camera.cell, destination.blocked, destination.selectable === true, destination.immediate === true)
-    for (const arrow of moveArrows.get(key) ?? []) drawMoveArrow(ctx, toScreen(arrow.from), toScreen(arrow.to), camera.cell, arrow.hostile ? HOSTILE_CORAL : PRIMARY_BLUE, arrow.dashed === true)
-    for (const marker of sweepMarkers.get(key) ?? []) drawSweepSword(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell)
-    for (const marker of shotMarkers.get(key) ?? []) drawShotArc(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell)
+    for (const arrow of moveArrows.get(key) ?? []) drawMoveArrow(ctx, toScreen(arrow.from), toScreen(arrow.to), camera.cell, arrow.hostile ? HOSTILE_CORAL : arrow.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE, arrow.dashed === true)
+    for (const marker of sweepMarkers.get(key) ?? []) drawSweepSword(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, marker.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE)
+    for (const marker of shotMarkers.get(key) ?? []) drawShotArc(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, marker.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE)
   }
 }
 
@@ -478,11 +479,11 @@ function shotCurve([fromX, fromY]: readonly [number, number], [toX, toY]: readon
   return { startX, startY, controlX, controlY, endX, endY }
 }
 
-function drawShotArc(ctx: CanvasRenderingContext2D, from: readonly [number, number], to: readonly [number, number], cell: number) {
+function drawShotArc(ctx: CanvasRenderingContext2D, from: readonly [number, number], to: readonly [number, number], cell: number, color: string) {
   const curve = shotCurve(from, to, cell); if (!curve) return
   const { startX, startY, controlX, controlY, endX, endY } = curve
-  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = PRIMARY_BLUE; ctx.shadowBlur = 7
-  ctx.strokeStyle = PRIMARY_BLUE; ctx.lineWidth = Math.max(2, cell * .055); ctx.beginPath(); ctx.moveTo(startX, startY); ctx.quadraticCurveTo(controlX, controlY, endX, endY); ctx.stroke()
+  ctx.save(); ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = color; ctx.shadowBlur = 7
+  ctx.strokeStyle = color; ctx.lineWidth = Math.max(2, cell * .055); ctx.beginPath(); ctx.moveTo(startX, startY); ctx.quadraticCurveTo(controlX, controlY, endX, endY); ctx.stroke()
   ctx.shadowBlur = 0; ctx.strokeStyle = 'rgba(244,244,245,.72)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(startX, startY); ctx.quadraticCurveTo(controlX, controlY, endX, endY); ctx.stroke()
   const tangentX = endX - controlX, tangentY = endY - controlY, tangentLength = Math.hypot(tangentX, tangentY), tx = tangentX / tangentLength, ty = tangentY / tangentLength
   const arrowSize = Math.max(7, cell * .16), arrowPX = -ty, arrowPY = tx
@@ -528,12 +529,12 @@ function drawResolvedShot(ctx: CanvasRenderingContext2D, from: readonly [number,
   ctx.restore()
 }
 
-function drawSweepSword(ctx: CanvasRenderingContext2D, [fromX, fromY]: readonly [number, number], [toX, toY]: readonly [number, number], cell: number) {
+function drawSweepSword(ctx: CanvasRenderingContext2D, [fromX, fromY]: readonly [number, number], [toX, toY]: readonly [number, number], cell: number, color: string) {
   const dx = toX - fromX, dy = toY - fromY, length = Math.hypot(dx, dy); if (!length) return
   const ux = dx / length, uy = dy / length, px = -uy, py = ux
   const handleX = fromX + ux * cell * .27, handleY = fromY + uy * cell * .27, bladeBaseX = fromX + ux * cell * .4, bladeBaseY = fromY + uy * cell * .4
   const tipX = toX - ux * cell * .12, tipY = toY - uy * cell * .12, bladeHalf = Math.max(2.5, cell * .055)
-  ctx.save(); ctx.strokeStyle = '#f4f4f5'; ctx.fillStyle = PRIMARY_BLUE; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = PRIMARY_BLUE; ctx.shadowBlur = 6
+  ctx.save(); ctx.strokeStyle = '#f4f4f5'; ctx.fillStyle = color; ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.shadowColor = color; ctx.shadowBlur = 6
   ctx.beginPath(); ctx.moveTo(tipX, tipY); ctx.lineTo(bladeBaseX + px * bladeHalf, bladeBaseY + py * bladeHalf); ctx.lineTo(bladeBaseX - px * bladeHalf, bladeBaseY - py * bladeHalf); ctx.closePath(); ctx.fill(); ctx.stroke()
   ctx.lineWidth = Math.max(2, cell * .05); ctx.beginPath(); ctx.moveTo(bladeBaseX + px * cell * .12, bladeBaseY + py * cell * .12); ctx.lineTo(bladeBaseX - px * cell * .12, bladeBaseY - py * cell * .12); ctx.stroke()
   ctx.beginPath(); ctx.moveTo(handleX, handleY); ctx.lineTo(bladeBaseX, bladeBaseY); ctx.strokeStyle = '#a1a1aa'; ctx.stroke(); ctx.fillStyle = '#f4f4f5'; ctx.beginPath(); ctx.arc(handleX, handleY, Math.max(2, cell * .045), 0, Math.PI * 2); ctx.fill(); ctx.restore()

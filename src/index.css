@@ -56,11 +56,16 @@ button, [role="button"] { cursor: pointer; }
 }
 @media (prefers-reduced-motion: no-preference) {
   .tutorial-map-highlight { animation: tutorial-ripple 1.35s cubic-bezier(.16, 1, .3, 1) infinite; }
+  .pending-command-signal { animation: pending-command-arrival .5s cubic-bezier(.16, 1, .3, 1); }
 }
 @keyframes tutorial-ripple {
   0% { opacity: .55; transform: translate(-50%, -50%) scale(.86); }
   55% { opacity: 1; }
   100% { opacity: .25; transform: translate(-50%, -50%) scale(1.16); }
+}
+@keyframes pending-command-arrival {
+  from { background-color: rgba(69, 145, 197, .34); transform: scale(.82); }
+  to { background-color: rgba(69, 145, 197, .1); transform: scale(1); }
 }
 
 /* Marketing page */

@@ -69,13 +69,19 @@ export interface CommandPlan {
   core_action?: CoreAction
 }
 
-export interface ReceivedNotice {
+export type CommandSource = 'AGENT' | 'MANUAL'
+
+export interface ReceiptMetadata {
   tick: number
-  source: 'AGENT' | 'MANUAL'
+  source: CommandSource
   received_at: string
 }
 
-export interface Receipt extends ReceivedNotice {
+export interface ReceivedNotice extends ReceiptMetadata {
+  plan: CommandPlan
+}
+
+export interface Receipt extends ReceiptMetadata {
   accepted: true
 }
 

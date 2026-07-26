@@ -28,6 +28,14 @@ describe('movement preview', () => {
   })
   it('maps an adjacent target to a direction', () => expect(directionTo([2, 3], [1, 3])).toBe('LEFT'))
   it('builds arrows from the current plan', () => expect(plannedMoveArrows(state(unit), { tick: 1, unit_actions: { unit: { type: 'MOVE', direction: 'DOWN' } } })[0].to).toEqual([0, 1]))
+  it('preserves the command source on a planned move arrow', () => {
+    expect(plannedMoveArrows(
+      state(unit),
+      { tick: 1, unit_actions: { unit: { type: 'MOVE', direction: 'DOWN' } } },
+      [],
+      { unitSources: { unit: 'AGENT' } },
+    )[0].source).toBe('AGENT')
+  })
   it('uses a solid arrow for the movement executing this Tick', () => {
     const moving = { ...core, state: 'MOVING' as const, destination: [1, 0] as [number, number] }
     expect(plannedMoveArrows(state(moving), { tick: 1, unit_actions: {} })[0]).toMatchObject({ from: [0, 0], to: [1, 0], dashed: false })

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { api, APIError } from '../lib/api'
 import { demoReceipt, demoState } from '../lib/demo'
+import { isReceivedNotice, type CommandReceipts } from '../lib/commandPlans'
 import { loadExplored, rememberVisible, type ExploredCell } from '../lib/exploration'
 import type { CommandPlan, PlayerState, ReceivedNotice, StreamPhase } from '../lib/types'
 
@@ -29,7 +30,7 @@ export function useGameStream(demo = false, explorationNamespace = 'anonymous') 
   const [state, setState] = useState<PlayerState | null>(demo ? demoState : null)
   const [phase, setPhase] = useState<StreamPhase>(demo ? 'open' : 'connecting')
   const [stateReceivedAt, setStateReceivedAt] = useState<number | null>(() => demo ? Date.now() : null)
-  const [receipts, setReceipts] = useState<Partial<Record<'AGENT' | 'MANUAL', ReceivedNotice>>>({})
+  const [receipts, setReceipts] = useState<CommandReceipts>({})
   const [explored, setExplored] = useState<Map<string, ExploredCell>>(new Map())
   const [error, setError] = useState('')
   const tickRef = useRef<number | null>(tick)
@@ -89,7 +90,7 @@ export function useGameStream(demo = false, explorationNamespace = 'anonymous') 
             return
           }
           if (message.type === 'received') {
-            if (!message.data || typeof message.data !== 'object') throw new Error('invalid receipt')
+            if (!isReceivedNotice(message.data) || message.data.tick !== tickRef.current) throw new Error('invalid receipt')
             setReceipts((current) => ({ ...current, [message.data.source]: message.data }))
             return
           }
@@ -127,7 +128,13 @@ export function useGameStream(demo = false, explorationNamespace = 'anonymous') 
     setError('')
     try {
       const receipt = demo ? { ...demoReceipt, tick: plan.tick, received_at: new Date().toISOString() } : await api.submitCommands(plan)
-      setReceipts((current) => ({ ...current, MANUAL: receipt })); return receipt
+      if (demo) {
+        setReceipts((current) => ({
+          ...current,
+          MANUAL: { tick: receipt.tick, source: 'MANUAL', received_at: receipt.received_at, plan },
+        }))
+      }
+      return receipt
     } catch (cause) {
       const code = cause instanceof APIError ? cause.code : 'REQUEST_FAILED'
       if (tickRef.current === plan.tick) {

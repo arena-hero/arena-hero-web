@@ -13,6 +13,13 @@ describe('combat preview', () => {
   it('points a sweep marker at the chosen adjacent cell', () => {
     expect(plannedSweepMarkers(state, { tick: 1, unit_actions: { vanguard: { type: 'SWEEP', direction: 'LEFT' } } })).toEqual([{ objectId: 'vanguard', from: [2, 3], to: [1, 3] }])
   })
+  it('preserves the command source on a planned sweep marker', () => {
+    expect(plannedSweepMarkers(
+      state,
+      { tick: 1, unit_actions: { vanguard: { type: 'SWEEP', direction: 'LEFT' } } },
+      { vanguard: 'AGENT' },
+    )[0].source).toBe('AGENT')
+  })
   it('offers unobstructed orthogonal Ranger targets at distance one through three', () => {
     const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
     const adjacent: WorldObject = { kind: 'UNIT', id: 'adjacent', controlled: false, position: [-1, 0], hp: 4, unit_type: 'VANGUARD' }
@@ -26,5 +33,14 @@ describe('combat preview', () => {
     const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
     const world: PlayerState = { ...state, objects: [ranger] }
     expect(plannedShotMarkers(world, { tick: 1, unit_actions: { ranger: { type: 'SHOOT', target_id: 'enemy', expected_cell: [0, 3] } } })).toEqual([{ objectId: 'ranger', from: [0, 0], to: [0, 3] }])
+  })
+  it('preserves the command source on a planned shot marker', () => {
+    const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
+    const world: PlayerState = { ...state, objects: [ranger] }
+    expect(plannedShotMarkers(
+      world,
+      { tick: 1, unit_actions: { ranger: { type: 'SHOOT', target_id: 'enemy', expected_cell: [0, 3] } } },
+      { ranger: 'MANUAL' },
+    )[0].source).toBe('MANUAL')
   })
 })

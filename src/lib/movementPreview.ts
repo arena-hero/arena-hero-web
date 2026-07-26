@@ -1,4 +1,6 @@
 import type { CommandPlan, Direction, PlayerState, Position, WorldObject } from './types'
+import type { CommandPlanSources } from './commandPlans'
+import type { CommandSource } from './types'
 import { MAX_ENTITIES_PER_CELL } from './gameRules'
 import { positionKey } from './visibility'
 import type { MovementRoute } from './pathfinding'
@@ -42,9 +44,9 @@ export function directionTo(from: Position, to: Position): Direction | null {
   return steps.find((step) => step.dx === dx && step.dy === dy)?.direction ?? null
 }
 
-export interface MoveArrow { objectId: string; from: Position; to: Position; dashed?: boolean; hostile?: boolean }
+export interface MoveArrow { objectId: string; from: Position; to: Position; dashed?: boolean; hostile?: boolean; source?: CommandSource }
 
-export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes: MovementRoute[] = []): MoveArrow[] {
+export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes: MovementRoute[] = [], sources?: CommandPlanSources): MoveArrow[] {
   const arrows: MoveArrow[] = []
   const routed = new Set(routes.map((route) => route.objectId))
   const objectsById = new Map(state.objects.flatMap((object) => object.id ? [[object.id, object] as const] : []))
@@ -54,7 +56,7 @@ export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes:
     for (let index = 0; index < route.path.length - 1; index++) {
       const from = route.path[index], to = route.path[index + 1]
       const current = index === 0 && currentDestination && samePosition(currentDestination, to)
-      arrows.push({ objectId: route.objectId, from, to, dashed: !current })
+      arrows.push({ objectId: route.objectId, from, to, dashed: !current, ...(sources ? { source: 'MANUAL' as const } : {}) })
     }
   }
   for (const object of state.objects) {
@@ -68,7 +70,13 @@ export function plannedMoveArrows(state: PlayerState, plan: CommandPlan, routes:
     const action = object.kind === 'CORE' ? plan.core_action : plan.unit_actions[object.id]
     if (!action || (action.type !== 'MOVE' && action.type !== 'START_MOVE') || !action.direction) continue
     const step = steps.find((candidate) => candidate.direction === action.direction)
-    if (step) arrows.push({ objectId: object.id, from: object.position, to: [object.position[0] + step.dx, object.position[1] + step.dy] })
+    if (step) arrows.push({
+      objectId: object.id, from: object.position,
+      to: [object.position[0] + step.dx, object.position[1] + step.dy],
+      ...(object.kind === 'CORE'
+        ? sources?.coreSource ? { source: sources.coreSource } : {}
+        : sources?.unitSources[object.id] ? { source: sources.unitSources[object.id] } : {}),
+    })
   }
   return arrows
 }
