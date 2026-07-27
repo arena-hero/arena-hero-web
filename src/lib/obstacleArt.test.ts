@@ -7,8 +7,8 @@ const occupied = (...positions: [number, number][]) => new Set(positions.map(pos
 describe('obstacle art', () => {
   it('uses transparent object sprites rather than a clipped terrain slab', () => {
     expect(OBSTACLE_SPRITE_PATHS).toEqual([
-      '/assets/obstacles/neo-expressionist/sprites/asteroid-large-1.png',
-      '/assets/obstacles/neo-expressionist/sprites/asteroid-large-2.png',
+      '/assets/game/obstacles/asteroid-large-1.png',
+      '/assets/game/obstacles/asteroid-large-2.png',
     ])
   })
 

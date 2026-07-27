@@ -14,7 +14,7 @@ describe('LandingPage', () => {
 
     expect(screen.getByRole('heading', { name: 'Make your mark on an infinite battlefield.' })).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: 'Create account' })[0]).toHaveAttribute('href', '/register')
-    expect(screen.getByAltText('Arena Hero tactical map with units, resources, and obstacles')).toHaveAttribute('src', '/assets/landing/arena-gameplay.jpg')
+    expect(screen.getByAltText('Arena Hero tactical map with units, resources, and obstacles')).toHaveAttribute('src', '/assets/marketing/arena-gameplay.jpg')
     expect(screen.getByText('/api/v1/game/commands')).toBeInTheDocument()
   })
 })

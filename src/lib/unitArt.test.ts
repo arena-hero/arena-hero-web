@@ -2,12 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { UNIT_SPRITE_PATHS, positionNearViewport, unitArtType, unitSpriteRect } from './unitArt'
 
 describe('unit art', () => {
-  it('maps Core, Vanguard, and Ranger to neo-expressionist sprites', () => {
+  it('maps every unit type to its game sprite', () => {
     expect(UNIT_SPRITE_PATHS).toEqual({
-      CORE: '/assets/units/neo-expressionist/sprites/core.png',
-      WORKER: '/assets/units/neo-expressionist/sprites/worker.png',
-      VANGUARD: '/assets/units/neo-expressionist/sprites/vanguard.png',
-      RANGER: '/assets/units/neo-expressionist/sprites/ranger.png',
+      CORE: '/assets/game/units/core.png',
+      WORKER: '/assets/game/units/worker.png',
+      VANGUARD: '/assets/game/units/vanguard.png',
+      RANGER: '/assets/game/units/ranger.png',
     })
     expect(unitArtType({ kind: 'CORE' })).toBe('CORE')
     expect(unitArtType({ kind: 'UNIT', unit_type: 'VANGUARD' })).toBe('VANGUARD')

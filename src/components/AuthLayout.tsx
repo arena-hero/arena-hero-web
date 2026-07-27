@@ -16,7 +16,7 @@ export function AuthLayout() {
         <p>{t('auth.storyBody')}</p>
       </div>
       <div className="auth-story-media">
-        <img src="/assets/landing/arena-gameplay.jpg" alt={t('auth.storyAlt')} width="1020" height="720" fetchPriority="high" />
+        <img src="/assets/marketing/arena-gameplay.jpg" alt={t('auth.storyAlt')} width="1020" height="720" fetchPriority="high" />
       </div>
     </section>
     <section className="auth-form-region"><Outlet /></section>

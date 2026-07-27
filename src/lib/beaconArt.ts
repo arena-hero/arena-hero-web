@@ -1,4 +1,4 @@
-export const BEACON_SPRITE_PATH = '/assets/beacon/neo-expressionist/sprites/champion-beacon.png'
+export const BEACON_SPRITE_PATH = '/assets/game/beacon.png'
 
 export function beaconSpriteRect(screenX: number, screenY: number, cell: number, attached: boolean, aspectRatio = 1) {
   const maxSize = Math.max(1, Math.round(cell * (attached ? .58 : .98)))

@@ -1,1 +1,1 @@
-export const WORLD_BACKGROUND_PATH = '/assets/background/neo-expressionist/deep-space.webp'
+export const WORLD_BACKGROUND_PATH = '/assets/game/background.webp'

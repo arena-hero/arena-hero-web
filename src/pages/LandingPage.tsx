@@ -4,12 +4,14 @@ import { Link } from 'react-router'
 import { LanguageToggle } from '../components/LanguageToggle'
 import { Logo } from '../components/Logo'
 import { useAuth } from '../context/AuthContext'
+import { BEACON_SPRITE_PATH } from '../lib/beaconArt'
+import { UNIT_SPRITE_PATHS } from '../lib/unitArt'
 
 const units = [
-  { key: 'core', art: '/assets/units/neo-expressionist/sprites/core.png' },
-  { key: 'worker', art: '/assets/units/neo-expressionist/sprites/worker.png' },
-  { key: 'vanguard', art: '/assets/units/neo-expressionist/sprites/vanguard.png' },
-  { key: 'ranger', art: '/assets/units/neo-expressionist/sprites/ranger.png' },
+  { key: 'core', art: UNIT_SPRITE_PATHS.CORE },
+  { key: 'worker', art: UNIT_SPRITE_PATHS.WORKER },
+  { key: 'vanguard', art: UNIT_SPRITE_PATHS.VANGUARD },
+  { key: 'ranger', art: UNIT_SPRITE_PATHS.RANGER },
 ] as const
 
 export function LandingPage() {
@@ -46,7 +48,7 @@ export function LandingPage() {
       </div>
       <div className="landing-hero-visual" aria-label={t('landing.hero.visualLabel')}>
         <div className="landing-image-frame">
-          <img src="/assets/landing/arena-gameplay.jpg" alt={t('landing.hero.visualAlt')} width="1020" height="720" fetchPriority="high" />
+          <img src="/assets/marketing/arena-gameplay.jpg" alt={t('landing.hero.visualAlt')} width="1020" height="720" fetchPriority="high" />
         </div>
       </div>
     </section>
@@ -88,7 +90,7 @@ export function LandingPage() {
       <div className="landing-container landing-beacon-layout">
         <div className="landing-beacon-art landing-reveal">
           <span className="landing-beacon-orbit" aria-hidden="true" />
-          <img src="/assets/beacon/neo-expressionist/sprites/champion-beacon.png" alt={t('landing.beacon.alt')} width="256" height="256" loading="lazy" />
+          <img src={BEACON_SPRITE_PATH} alt={t('landing.beacon.alt')} width="256" height="256" loading="lazy" />
         </div>
         <div className="landing-beacon-copy landing-reveal">
           <Crosshair size={22} aria-hidden="true" />

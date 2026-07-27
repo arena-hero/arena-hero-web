@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest'
 import { BEACON_SPRITE_PATH, beaconSpriteRect } from './beaconArt'
 
 describe('beacon art', () => {
-  it('uses the neo-expressionist Champion Beacon sprite', () => {
-    expect(BEACON_SPRITE_PATH).toBe('/assets/beacon/neo-expressionist/sprites/champion-beacon.png')
+  it('uses the game Beacon sprite', () => {
+    expect(BEACON_SPRITE_PATH).toBe('/assets/game/beacon.png')
   })
 
   it('keeps a ground Beacon prominent and a carried Beacon compact', () => {

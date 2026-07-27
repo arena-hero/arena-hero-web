@@ -2,8 +2,8 @@ import type { Position } from './types'
 import { positionKey } from './visibility'
 
 export const OBSTACLE_SPRITE_PATHS = [
-  '/assets/obstacles/neo-expressionist/sprites/asteroid-large-1.png',
-  '/assets/obstacles/neo-expressionist/sprites/asteroid-large-2.png',
+  '/assets/game/obstacles/asteroid-large-1.png',
+  '/assets/game/obstacles/asteroid-large-2.png',
 ] as const
 
 export interface ObstacleCellShape {

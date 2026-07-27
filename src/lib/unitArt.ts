@@ -3,10 +3,10 @@ import type { UnitType, WorldObject } from './types'
 export type UnitArtType = UnitType | 'CORE'
 
 export const UNIT_SPRITE_PATHS: Record<UnitArtType, string> = {
-  CORE: '/assets/units/neo-expressionist/sprites/core.png',
-  WORKER: '/assets/units/neo-expressionist/sprites/worker.png',
-  VANGUARD: '/assets/units/neo-expressionist/sprites/vanguard.png',
-  RANGER: '/assets/units/neo-expressionist/sprites/ranger.png',
+  CORE: '/assets/game/units/core.png',
+  WORKER: '/assets/game/units/worker.png',
+  VANGUARD: '/assets/game/units/vanguard.png',
+  RANGER: '/assets/game/units/ranger.png',
 }
 
 export function unitArtType(object: WorldObject): UnitArtType | null {

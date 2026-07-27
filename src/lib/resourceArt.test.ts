@@ -2,10 +2,10 @@ import { describe, expect, it } from 'vitest'
 import { RESOURCE_SPRITE_PATHS, resourceSpriteIndex, resourceSpriteRect } from './resourceArt'
 
 describe('resource art', () => {
-  it('uses neo-expressionist crystal sprites', () => {
+  it('uses the game resource sprites', () => {
     expect(RESOURCE_SPRITE_PATHS).toEqual([
-      '/assets/resources/neo-expressionist/sprites/crystal-1.png',
-      '/assets/resources/neo-expressionist/sprites/crystal-2.png',
+      '/assets/game/resources/crystal-1.png',
+      '/assets/game/resources/crystal-2.png',
     ])
   })
 

@@ -1,8 +1,8 @@
 import type { Position } from './types'
 
 export const RESOURCE_SPRITE_PATHS = [
-  '/assets/resources/neo-expressionist/sprites/crystal-1.png',
-  '/assets/resources/neo-expressionist/sprites/crystal-2.png',
+  '/assets/game/resources/crystal-1.png',
+  '/assets/game/resources/crystal-2.png',
 ] as const
 
 export function resourceSpriteIndex([x, y]: Position, count: number = RESOURCE_SPRITE_PATHS.length) {
