@@ -12,7 +12,21 @@ describe('API URL', () => {
 })
 
 describe('manual command API', () => {
-  afterEach(() => vi.restoreAllMocks())
+  afterEach(() => {
+    vi.restoreAllMocks()
+    vi.unstubAllEnvs()
+  })
+
+  it('completes OAuth sign-up through the configured API origin', async () => {
+    vi.stubEnv('VITE_API_BASE_URL', 'https://api.arenahero.io')
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ csrf_token: 'csrf', expires_at: '2026-07-27T06:00:00Z' }), { status: 201, headers: { 'Content-Type': 'application/json' } }))
+
+    await api.completeOAuthSignup('linux-do', 'one-time-token', 'hero')
+
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('https://api.arenahero.io/api/v1/auth/linux-do/complete')
+    expect(JSON.parse(init?.body as string)).toEqual({ signup_token: 'one-time-token', username: 'hero' })
+  })
 
   it('sends CSRF and a unique idempotency key with the complete plan', async () => {
     setCSRF('csrf-test')
