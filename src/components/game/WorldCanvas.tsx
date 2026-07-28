@@ -338,7 +338,7 @@ function drawWorldBackground(ctx: CanvasRenderingContext2D, size: { width: numbe
     if (obstacleCells.has(key) && (isVisible || memory)) {
       const [screenX, screenY] = toScreen([x, y])
       renderedObstacles.push({ position: [x, y], x: screenX, y: screenY, visible: isVisible, shape: obstacleCellShape([x, y], obstacleCells) })
-    } else if (visibleResourceCells.has(key) || memory?.kind === 'RESOURCE') {
+    } else if (visibleResourceCells.has(key) || (!isVisible && memory?.kind === 'RESOURCE')) {
       const [screenX, screenY] = toScreen([x, y])
       renderedResources.push({ position: [x, y], x: screenX, y: screenY, visible: isVisible })
     }

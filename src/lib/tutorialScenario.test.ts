@@ -10,6 +10,8 @@ describe('tutorialScenario', () => {
     expect(TUTORIAL_POSITIONS.worker).not.toEqual(TUTORIAL_POSITIONS.beacon)
     expect(object(4, TUTORIAL_IDS.worker)).toMatchObject({ position: TUTORIAL_POSITIONS.resource, cargo: 0 })
     expect(object(5, TUTORIAL_IDS.worker)).toMatchObject({ position: TUTORIAL_POSITIONS.resource, cargo: 1 })
+    expect(createTutorialState(5).objects.some((candidate) => candidate.kind === 'RESOURCE')).toBe(false)
+    expect(createTutorialState(5).events).toContainEqual(expect.objectContaining({ event_type: 'HARVEST_SUCCEEDED' }))
     expect(object(6, TUTORIAL_IDS.worker)).toMatchObject({ position: TUTORIAL_POSITIONS.core, cargo: 1 })
     expect(createTutorialState(7).resources).toBe(21)
     expect(object(8, TUTORIAL_IDS.worker)).toMatchObject({ position: TUTORIAL_POSITIONS.beacon })

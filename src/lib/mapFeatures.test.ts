@@ -17,7 +17,7 @@ describe('mapFeaturesAt', () => {
     expect(mapFeaturesAt([0, 0], state, new Map())).toEqual([{ kind: 'BEACON', position: [0, 0], status: 'GROUND' }])
   })
 
-  it('exposes a visible resource point without finite stock', () => {
+  it('exposes a currently visible resource point', () => {
     const explored = new Map<string, ExploredCell>([['2,1', { kind: 'RESOURCE', position: [2, 1] }]])
     expect(mapFeaturesAt([2, 1], state, explored)).toEqual([{ kind: 'RESOURCE', position: [2, 1] }])
   })
@@ -29,5 +29,17 @@ describe('mapFeaturesAt', () => {
     ])
     expect(mapFeaturesAt([8, 8], state, explored)[0]).toMatchObject({ kind: 'RESOURCE' })
     expect(mapFeaturesAt([9, 8], state, explored)[0]).toMatchObject({ kind: 'OBSTACLE' })
+  })
+
+  it('removes a depleted remembered resource as soon as its cell is visible', () => {
+    const explored = new Map<string, ExploredCell>([['0,1', { kind: 'RESOURCE', position: [0, 1] }]])
+    const visibleState: PlayerState = {
+      ...state,
+      objects: [
+        ...state.objects,
+        { kind: 'CORE', id: 'own-core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' },
+      ],
+    }
+    expect(mapFeaturesAt([0, 1], visibleState, explored)).toEqual([])
   })
 })

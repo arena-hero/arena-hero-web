@@ -1,6 +1,6 @@
 import type { ChampionBeaconView, PlayerState, Position } from './types'
 import type { ExploredCell } from './exploration'
-import { positionKey } from './visibility'
+import { computeVisibility, positionKey } from './visibility'
 
 export type MapFeatureKind = 'BEACON' | 'RESOURCE' | 'OBSTACLE'
 
@@ -14,9 +14,11 @@ export function mapFeaturesAt(position: Position, state: PlayerState, explored: 
   const features: MapFeatureView[] = []
   if (samePosition(state.champion_beacon.position, position)) features.push({ kind: 'BEACON', position, status: state.champion_beacon.status })
 
-  const remembered = explored.get(positionKey(position))
+  const key = positionKey(position)
+  const remembered = explored.get(key)
+  const visible = computeVisibility(state).has(key)
   const visibleResource = state.objects.some((object) => object.kind === 'RESOURCE' && object.positions?.some((candidate) => samePosition(candidate, position)))
-  if (visibleResource || remembered?.kind === 'RESOURCE') {
+  if (visibleResource || (!visible && remembered?.kind === 'RESOURCE')) {
     features.push({ kind: 'RESOURCE', position })
   }
 

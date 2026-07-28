@@ -34,6 +34,12 @@ describe('autonomous pathfinding', () => {
     expect(findMovementPath(state([core, resource]), known, core, [2, 0]).path).not.toContainEqual([1, 0])
   })
 
+  it('lets current visibility replace a stale remembered resource', () => {
+    const known = explored([0, 0], [1, 0], [2, 0])
+    known.set('1,0', { position: [1, 0], kind: 'RESOURCE' })
+    expect(findMovementPath(state([core]), known, core, [2, 0]).path).toEqual([[0, 0], [1, 0], [2, 0]])
+  })
+
   it('submits only the next step and completes a goal at its destination', () => {
     const known = explored([0, 0], [1, 0], [2, 0])
     const active = applyAutonomousMovement(state([unit]), known, { unit: [2, 0] }, { tick: 9, unit_actions: {} })

@@ -45,13 +45,13 @@ export function createTutorialState(step: number): PlayerState {
   const beaconCarried = step >= 12
   const objects: WorldObject[] = [
     { kind: 'OBSTACLE', positions: obstacles },
-    { kind: 'RESOURCE', positions: [TUTORIAL_POSITIONS.resource] },
     { kind: 'CORE', id: TUTORIAL_IDS.core, controlled: true, position: TUTORIAL_POSITIONS.core, hp: 5, shield: 5, state: 'NORMAL' },
     { kind: 'UNIT', id: TUTORIAL_IDS.worker, controlled: true, position: workerPosition, hp: 2, unit_type: 'WORKER', cargo: workerCargo },
     { kind: 'UNIT', id: TUTORIAL_IDS.ranger, controlled: true, position: TUTORIAL_POSITIONS.ranger, hp: 2, unit_type: 'RANGER' },
     { kind: 'UNIT', id: TUTORIAL_IDS.enemyVanguard, controlled: false, position: TUTORIAL_POSITIONS.enemyVanguard, hp: step >= 10 ? 3 : 4, unit_type: 'VANGUARD' },
     { kind: 'UNIT', id: TUTORIAL_IDS.enemyRanger, controlled: false, position: TUTORIAL_POSITIONS.enemyRanger, hp: step >= 11 ? 1 : 2, unit_type: 'RANGER' },
   ]
+  if (step <= 4) objects.splice(1, 0, { kind: 'RESOURCE', positions: [TUTORIAL_POSITIONS.resource] })
   if (vanguardSpawned) objects.push({ kind: 'UNIT', id: TUTORIAL_IDS.vanguard, controlled: true, position: TUTORIAL_POSITIONS.core, hp: 4, unit_type: 'VANGUARD' })
 
   return {
@@ -65,6 +65,7 @@ export function createTutorialState(step: number): PlayerState {
       : { position: TUTORIAL_POSITIONS.beacon, status: 'GROUND' },
     objects,
     events: [
+      ...(step === 5 ? [event('harvest', 7005, 'HARVEST_SUCCEEDED', TUTORIAL_IDS.worker, TUTORIAL_POSITIONS.resource)] : []),
       ...(step >= 10 ? [event('sweep', 7010, 'SWEEP_RESOLVED', TUTORIAL_IDS.vanguard, TUTORIAL_POSITIONS.enemyVanguard)] : []),
       ...(step >= 11 ? [event('shot', 7011, 'SHOT_HIT', TUTORIAL_IDS.ranger, TUTORIAL_POSITIONS.enemyRanger)] : []),
     ],

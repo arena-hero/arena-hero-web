@@ -16,7 +16,7 @@ describe('resource art', () => {
     expect(resourceSpriteIndex([0, 0], 0)).toBe(0)
   })
 
-  it('keeps infinite resource points at a stable integer-pixel size', () => {
+  it('keeps resource points at a stable integer-pixel size', () => {
     expect(resourceSpriteRect(100.2, 200.2, 44)).toEqual({ left: 80, top: 180, size: 40 })
   })
 })

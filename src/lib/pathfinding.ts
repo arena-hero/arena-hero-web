@@ -217,7 +217,7 @@ function createNavigationContext(state: PlayerState, explored: Map<string, Explo
 }
 
 function terrainKind(context: NavigationContext, key: string): ExploredCell['kind'] | undefined {
-  return context.terrainOverrides.get(key) ?? context.explored.get(key)?.kind ?? (context.visible.has(key) ? 'EMPTY' : undefined)
+  return context.terrainOverrides.get(key) ?? (context.visible.has(key) ? 'EMPTY' : context.explored.get(key)?.kind)
 }
 
 function projectedEntityCounts(context: NavigationContext, plan: CommandPlan | undefined, excludedEntityId: string) {
