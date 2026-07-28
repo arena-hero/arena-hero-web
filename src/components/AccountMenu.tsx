@@ -1,4 +1,4 @@
-import { BarChart3, ChevronDown, Gamepad2, GitFork, GraduationCap, KeyRound, LogOut } from 'lucide-react'
+import { BarChart3, BookOpen, ChevronDown, Gamepad2, GitFork, GraduationCap, KeyRound, LogOut } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { NavLink, useNavigate } from 'react-router'
@@ -59,6 +59,7 @@ export function AccountMenu() {
       <nav aria-label="Account navigation" className="mt-1">
         <NavLink role="menuitem" to="/arena" onClick={() => setOpen(false)} className={({ isActive }) => `flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm transition-colors ${isActive ? 'bg-indigo-deep/55 text-blue-soft' : 'text-zinc-400 hover:bg-white/5 hover:text-zinc-100'}`}><Gamepad2 size={16} />{t('nav.arena')}</NavLink>
         <button role="menuitem" type="button" onClick={replayTutorial} className="flex min-h-11 w-full items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><GraduationCap size={16} />{t('nav.tutorial')}</button>
+        <a role="menuitem" href="https://doc.arenahero.io/" target="_blank" rel="noopener noreferrer" onClick={() => setOpen(false)} className="flex min-h-11 items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><BookOpen size={16} />{t('nav.documentation')}</a>
         {dialogItems.map(({ id, label, icon: Icon }) => <button role="menuitem" key={id} type="button" onClick={() => showDialog(id)} className="flex min-h-11 w-full items-center gap-3 rounded-gold px-3 text-sm text-zinc-400 transition-colors hover:bg-white/5 hover:text-zinc-100"><Icon size={16} />{label}</button>)}
       </nav>
       <LanguageToggle className="w-full" />

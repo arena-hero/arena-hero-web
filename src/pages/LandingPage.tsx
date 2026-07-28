@@ -29,6 +29,7 @@ export function LandingPage() {
           <a href="#fleet">{t('landing.nav.fleet')}</a>
           <a href="#beacon">{t('landing.nav.beacon')}</a>
           <a href="#agent">{t('landing.nav.agent')}</a>
+          <a href="https://doc.arenahero.io/" target="_blank" rel="noopener noreferrer">{t('landing.nav.documentation')}</a>
         </nav>
         <div className="flex items-center gap-1 sm:gap-3">
           <LanguageToggle minimal className="sm:[&>span]:not-sr-only" />

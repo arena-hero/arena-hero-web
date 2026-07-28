@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next'
 const resources = {
   en: { translation: {
     brand: 'ARENA HERO', tagline: 'Persistent world. Precise orders.',
-    nav: { arena: 'Arena', tutorial: 'Training', stats: 'Statistics', keys: 'API Keys' },
+    nav: { arena: 'Arena', tutorial: 'Training', documentation: 'Documentation', stats: 'Statistics', keys: 'API Keys' },
     auth: {
       welcome: 'Return to the arena', create: 'Create your operator', email: 'Email', username: 'Username', password: 'Password', confirmPassword: 'Confirm password', passwordMismatch: 'The two passwords do not match.',
       login: 'Sign in', register: 'Create account', noAccount: 'No account yet?', hasAccount: 'Already registered?',
@@ -19,7 +19,7 @@ const resources = {
       storyLabel: 'Arena Hero introduction', storyTitle: 'A world that keeps moving.', storyBody: 'Scout the dark, build your fleet, and contest the single Champion Beacon. Every Tick leaves a permanent mark.', storyAlt: 'Arena Hero battlefield with ships, crystals, and asteroid fields', backHome: 'Back to Arena Hero home',
     },
     landing: {
-      nav: { label: 'Primary navigation', gameplay: 'How it plays', fleet: 'Fleet', beacon: 'Beacon', agent: 'Agents' },
+      nav: { label: 'Primary navigation', gameplay: 'How it plays', fleet: 'Fleet', beacon: 'Beacon', agent: 'Agents', documentation: 'Docs' },
       actions: { createAccount: 'Create account', signIn: 'Sign in', enterArena: 'Enter arena' },
       hero: { title: 'Make your mark on an infinite battlefield.', body: 'Issue precise orders, grow your fleet, and fight for the only Champion Beacon.', visualLabel: 'Arena Hero live battlefield', visualAlt: 'Arena Hero tactical map with units, resources, and obstacles' },
       intro: { kicker: 'One persistent world', title: 'The world keeps moving. Every command changes what happens next.', body: 'Explore an infinite deterministic map where every player shares the same history.' },
@@ -102,7 +102,7 @@ const resources = {
   } },
   zh: { translation: {
     brand: 'ARENA HERO', tagline: '永久世界，精确指令。',
-    nav: { arena: '战场', tutorial: '新手教程', stats: '统计', keys: 'API 密钥' },
+    nav: { arena: '战场', tutorial: '新手教程', documentation: '文档', stats: '统计', keys: 'API 密钥' },
     auth: {
       welcome: '重返战场', create: '创建操作员', email: '邮箱', username: '用户名', password: '密码', confirmPassword: '再次输入密码', passwordMismatch: '两次输入的密码不一致。',
       login: '登录', register: '创建账号', noAccount: '还没有账号？', hasAccount: '已经注册？',
@@ -117,7 +117,7 @@ const resources = {
       storyLabel: 'Arena Hero 游戏介绍', storyTitle: '世界始终在运转。', storyBody: '探索黑暗，建立舰队，争夺唯一的冠军信标。每个 Tick 都会留下永久影响。', storyAlt: 'Arena Hero 战场中的飞船、晶体和陨石带', backHome: '返回 Arena Hero 首页',
     },
     landing: {
-      nav: { label: '主导航', gameplay: '玩法', fleet: '舰队', beacon: '冠军信标', agent: 'Agent' },
+      nav: { label: '主导航', gameplay: '玩法', fleet: '舰队', beacon: '冠军信标', agent: 'Agent', documentation: '文档' },
       actions: { createAccount: '创建账号', signIn: '登录', enterArena: '进入战场' },
       hero: { title: '在无限战场，留下你的名字。', body: '精确下令，扩张舰队，争夺唯一的冠军信标。', visualLabel: 'Arena Hero 实时战场', visualAlt: '包含单位、资源与障碍物的 Arena Hero 战术地图' },
       intro: { kicker: '同一个永久世界', title: '世界不会等待。每一道指令都在改变下一刻。', body: '探索确定性生成的无限地图，所有玩家共同书写同一段历史。' },
