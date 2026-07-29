@@ -1,8 +1,14 @@
 import type { WorldObject } from './types'
 
-const MAX_CANVAS_PIXEL_RATIO = 1.5
-const MAX_CANVAS_BACKING_PIXELS = 1_500_000
+const MAX_CANVAS_PIXEL_RATIO = 2
+const MAX_CANVAS_BACKING_PIXELS = 9_000_000
 const CANVAS_PIXEL_RATIO_STEP = 0.25
+const WHEEL_LINE_PIXELS = 16
+const MAX_WHEEL_PIXELS_PER_EVENT = 160
+const WHEEL_ZOOM_SENSITIVITY = 0.0015
+
+export const MIN_WORLD_CELL_SIZE = 24
+export const MAX_WORLD_CELL_SIZE = 78
 
 export const TERRAIN_CHUNK_CELLS = 8
 
@@ -18,6 +24,17 @@ export function canvasPixelRatio(size: { width: number; height: number }, device
   const capped = Math.min(Math.max(1, devicePixelRatio), MAX_CANVAS_PIXEL_RATIO, areaLimit)
   const stepped = Math.floor(capped / CANVAS_PIXEL_RATIO_STEP) * CANVAS_PIXEL_RATIO_STEP
   return Math.max(1, stepped)
+}
+
+export function wheelZoomCell(cell: number, deltaY: number, deltaMode: number, viewportHeight: number) {
+  const modePixels = deltaMode === 1
+    ? deltaY * WHEEL_LINE_PIXELS
+    : deltaMode === 2
+      ? deltaY * Math.max(1, viewportHeight)
+      : deltaY
+  const pixels = Math.max(-MAX_WHEEL_PIXELS_PER_EVENT, Math.min(MAX_WHEEL_PIXELS_PER_EVENT, modePixels))
+  const next = cell * Math.exp(-pixels * WHEEL_ZOOM_SENSITIVITY)
+  return Math.min(MAX_WORLD_CELL_SIZE, Math.max(MIN_WORLD_CELL_SIZE, next))
 }
 
 export function terrainChunkBounds(camera: WorldCamera, size: { width: number; height: number }) {
