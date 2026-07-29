@@ -8,9 +8,17 @@ export function AuthCard({ eyebrow, title, subtitle, children }: { eyebrow?: str
   </section>
 }
 
-export function FormField({ label, trailing, className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; trailing?: ReactNode }) {
+export function FormField({ label, trailing, hint, error, className = '', ...props }: React.InputHTMLAttributes<HTMLInputElement> & { label: string; trailing?: ReactNode; hint?: string; error?: string }) {
   const id = props.id ?? props.name
-  return <div><label htmlFor={id} className="mb-2 block text-sm font-medium text-zinc-300">{label}</label><div className="relative"><input {...props} id={id} className={`input ${trailing ? 'pr-12' : ''} ${className}`} />{trailing}</div></div>
+  const hintID = hint ? `${id}-hint` : undefined
+  const errorID = error ? `${id}-error` : undefined
+  const describedBy = [props['aria-describedby'], hintID, errorID].filter(Boolean).join(' ') || undefined
+  return <div>
+    <label htmlFor={id} className="mb-2 block text-sm font-medium text-zinc-300">{label}</label>
+    <div className="relative"><input {...props} id={id} aria-describedby={describedBy} aria-invalid={props['aria-invalid'] ?? Boolean(error)} className={`input ${trailing ? 'pr-12' : ''} ${className}`} />{trailing}</div>
+    {hint && <p id={hintID} className="mt-2 text-xs leading-5 text-zinc-500">{hint}</p>}
+    {error && <p id={errorID} role="alert" className="mt-2 text-xs leading-5 text-coral-hostile">{error}</p>}
+  </div>
 }
 
 export function FormError({ message }: { message?: string }) {

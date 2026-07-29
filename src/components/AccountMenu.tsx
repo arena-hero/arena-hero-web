@@ -45,7 +45,7 @@ export function AccountMenu() {
   const dialogItems = [
     { id: 'stats' as const, label: t('nav.stats'), icon: BarChart3 },
     { id: 'keys' as const, label: t('nav.keys'), icon: KeyRound },
-    { id: 'github' as const, label: t('auth.linkGithub'), icon: GitFork },
+    ...(!user?.oauth_providers?.includes('github') ? [{ id: 'github' as const, label: t('auth.linkGithub'), icon: GitFork }] : []),
   ]
 
   return <div ref={menuRef} className="relative">

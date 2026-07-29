@@ -90,6 +90,7 @@ export interface User {
   email: string
   username: string
   auth_source: 'MANUAL'
+  oauth_providers: Array<'github' | 'linux_do'>
 }
 
 export interface Session {

@@ -1,21 +1,26 @@
 import { Check, ExternalLink, GitFork } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { useAuth } from '../../context/AuthContext'
 import { api } from '../../lib/api'
 
 type LinkStatus = 'idle' | 'opened' | 'linked' | 'blocked' | 'failed'
 
 export function GitHubLinkDialogContent() {
   const { t } = useTranslation()
+  const { refresh } = useAuth()
   const [status, setStatus] = useState<LinkStatus>('idle')
 
   useEffect(() => {
     const receive = (event: MessageEvent) => {
-      if (event.origin === window.location.origin && event.data?.type === 'arena-hero:github-linked') setStatus('linked')
+      if (event.origin === window.location.origin && event.data?.type === 'arena-hero:github-linked') {
+        setStatus('linked')
+        void refresh()
+      }
     }
     window.addEventListener('message', receive)
     return () => window.removeEventListener('message', receive)
-  }, [])
+  }, [refresh])
 
   const link = () => {
     const popup = window.open('about:blank', 'arena-hero-github-link', 'popup,width=720,height=760,left=160,top=80')

@@ -5,8 +5,13 @@ import { MemoryRouter } from 'react-router'
 import '../lib/i18n'
 import { AccountMenu } from './AccountMenu'
 
+const authState = vi.hoisted(() => ({
+  user: { username: 'pilot', email: 'pilot@example.com', auth_source: 'MANUAL' as const, oauth_providers: [] as Array<'github' | 'linux_do'> },
+  refresh: vi.fn(),
+}))
+
 vi.mock('../context/AuthContext', () => ({
-  useAuth: () => ({ user: { username: 'pilot', email: 'pilot@example.com', auth_source: 'MANUAL' }, loading: false, refresh: vi.fn(), login: vi.fn(), logout: vi.fn() }),
+  useAuth: () => ({ user: authState.user, loading: false, refresh: authState.refresh, login: vi.fn(), logout: vi.fn() }),
 }))
 
 vi.mock('../lib/api', () => ({
@@ -20,6 +25,8 @@ vi.mock('../lib/api', () => ({
 
 describe('AccountMenu', () => {
   it('opens account tools as dialogs without navigating away', async () => {
+    authState.user.oauth_providers = []
+    authState.refresh.mockReset()
     const user = userEvent.setup()
     render(<MemoryRouter initialEntries={['/arena']}><AccountMenu /></MemoryRouter>)
     const accountButton = screen.getByRole('button', { name: 'Account' })
@@ -43,5 +50,16 @@ describe('AccountMenu', () => {
     await user.click(accountButton)
     await user.click(screen.getByRole('menuitem', { name: 'Link GitHub' }))
     expect(await screen.findByRole('dialog', { name: 'Link GitHub' })).toBeInTheDocument()
+    window.dispatchEvent(new MessageEvent('message', { origin: window.location.origin, data: { type: 'arena-hero:github-linked' } }))
+    expect(authState.refresh).toHaveBeenCalledOnce()
+  })
+
+  it('does not offer GitHub linking when GitHub is already connected', async () => {
+    authState.user.oauth_providers = ['github']
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={['/arena']}><AccountMenu /></MemoryRouter>)
+
+    await user.click(screen.getByRole('button', { name: 'Account' }))
+    expect(screen.queryByRole('menuitem', { name: 'Link GitHub' })).not.toBeInTheDocument()
   })
 })
