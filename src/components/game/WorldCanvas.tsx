@@ -14,6 +14,7 @@ import type { PlayerState, Position, WorldObject } from '../../lib/types'
 import { UNIT_SPRITE_PATHS, unitArtType, unitSpriteRect, type UnitArtType } from '../../lib/unitArt'
 import { computeVisibility, positionKey } from '../../lib/visibility'
 import { WORLD_BACKGROUND_PATH } from '../../lib/worldArt'
+import { canvasPixelRatio, prioritizeSelectionCandidates, TERRAIN_CHUNK_CELLS, terrainChunkBounds, type WorldCamera } from '../../lib/worldCanvasPerformance'
 import { BeaconDirectionIndicator } from './BeaconDirectionIndicator'
 import { MapFeatureInfo } from './MapFeatureInfo'
 import type { MapAnchor } from './UnitActionDialog'
@@ -43,12 +44,15 @@ interface Props {
 
 export interface RouteDestination { objectId: string; position: Position; blocked: boolean; selectable?: boolean; immediate?: boolean }
 
-interface Camera { x: number; y: number; cell: number }
+type Camera = WorldCamera
 const CORE_RESOURCE_REFERENCE = 20
 const MOVE_ANIMATION_MS = 420
 const SWEEP_ANIMATION_MS = 560
 const SHOT_ANIMATION_MS = 520
 const SELECTION_RIPPLE_MS = 900
+const CAMERA_FRAME_INTERVAL_MS = 1000 / 60
+const TERRAIN_CHUNK_PADDING_CELLS = 1
+const TERRAIN_CACHE_PIXEL_BUDGET = 12_000_000
 const SELECTED_GOLD = '#f6c453'
 const PRIMARY_BLUE = '#4591c5'
 const PRIMARY_BLUE_LIGHT = '#a8c8dd'
@@ -60,6 +64,22 @@ const BEACON_GOLD = '#d9a62e'
 const BEACON_GOLD_LIGHT = '#ffe29a'
 interface CachedUnitSprite { canvas: HTMLCanvasElement; width: number; height: number; padding: number }
 interface CachedBeaconSprite { canvas: HTMLCanvasElement; size: number }
+interface TerrainScene {
+  explored: Map<string, ExploredCell>
+  visible: Set<string>
+  visibleObstacleCells: Set<string>
+  visibleResourceCells: Set<string>
+  obstacleSprites: HTMLImageElement[]
+  resourceSprites: HTMLImageElement[]
+}
+interface CachedTerrainTile { canvas: HTMLCanvasElement; pixels: number }
+interface TerrainTileCache {
+  scene: TerrainScene
+  cell: number
+  ratio: number
+  pixels: number
+  tiles: Map<string, CachedTerrainTile>
+}
 const unitSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedUnitSprite>>()
 const beaconSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedBeaconSprite>>()
 
@@ -67,6 +87,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
+  const terrainCacheRef = useRef<TerrainTileCache | null>(null)
   const [size, setSize] = useState({ width: 800, height: 600 })
   const [camera, setCamera] = useState<Camera>({ x: 0, y: 0, cell: 44 })
   const [obstacleSprites, setObstacleSprites] = useState<HTMLImageElement[]>([])
@@ -84,6 +105,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const seenEventIdsRef = useRef<Set<string>>(new Set())
   const animationFrameRef = useRef<number | null>(null)
   const cameraFrameRef = useRef<number | null>(null)
+  const lastCameraCommitAtRef = useRef(0)
   const pendingCameraRef = useRef<Camera | null>(null)
   const cameraRef = useRef(camera)
   const centeredCoreId = useRef<string | null>(null); const previousCenterRequest = useRef(centerRequest)
@@ -96,6 +118,14 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const moveArrowsByPosition = useMemo(() => groupMarkersByOrigin(moveArrows), [moveArrows])
   const sweepMarkersByPosition = useMemo(() => groupMarkersByOrigin(sweepMarkers), [sweepMarkers])
   const shotMarkersByPosition = useMemo(() => groupMarkersByOrigin(shotMarkers), [shotMarkers])
+  const terrainScene = useMemo<TerrainScene>(() => ({
+    explored,
+    visible,
+    visibleObstacleCells,
+    visibleResourceCells,
+    obstacleSprites,
+    resourceSprites,
+  }), [explored, obstacleSprites, resourceSprites, visible, visibleObstacleCells, visibleResourceCells])
   const visibleShotMarkers = useMemo(() => shotMarkers.filter((marker) => positionInViewport(marker.from, camera, size, 1) || positionInViewport(marker.to, camera, size, 1)), [camera, shotMarkers, size])
   const inspectedFeatureView = useMemo(() => inspectedFeature ? mapFeaturesAt(inspectedFeature.position, state, explored).find((feature) => feature.kind === inspectedFeature.kind) ?? null : null, [explored, inspectedFeature, state])
 
@@ -103,11 +133,18 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
     const current = pendingCameraRef.current ?? cameraRef.current
     pendingCameraRef.current = update(current)
     if (cameraFrameRef.current !== null) return
-    cameraFrameRef.current = requestAnimationFrame(() => {
+    cameraFrameRef.current = requestAnimationFrame(function commitCamera(timestamp) {
+      if (timestamp - lastCameraCommitAtRef.current < CAMERA_FRAME_INTERVAL_MS - 1) {
+        cameraFrameRef.current = requestAnimationFrame(commitCamera)
+        return
+      }
       cameraFrameRef.current = null
       const pending = pendingCameraRef.current
       pendingCameraRef.current = null
-      if (pending) setCamera(pending)
+      if (!pending) return
+      lastCameraCommitAtRef.current = timestamp
+      cameraRef.current = pending
+      setCamera(pending)
     })
   }, [])
 
@@ -122,6 +159,10 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   useLayoutEffect(() => { cameraRef.current = camera }, [camera])
   useEffect(() => () => {
     if (cameraFrameRef.current !== null) cancelAnimationFrame(cameraFrameRef.current)
+  }, [])
+  useEffect(() => () => {
+    if (terrainCacheRef.current) releaseTerrainTiles(terrainCacheRef.current)
+    terrainCacheRef.current = null
   }, [])
   useEffect(() => {
     let active = true
@@ -176,7 +217,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
     const canvas = canvasRef.current
     const backgroundCanvas = backgroundCanvasRef.current
     if (!canvas || !backgroundCanvas || size.width <= 0 || size.height <= 0) return
-    const ratio = Math.min(2, window.devicePixelRatio || 1)
+    const ratio = canvasPixelRatio(size, window.devicePixelRatio || 1)
     const pixelWidth = Math.max(1, Math.round(size.width * ratio)), pixelHeight = Math.max(1, Math.round(size.height * ratio))
     if (backgroundCanvas.width !== pixelWidth) backgroundCanvas.width = pixelWidth
     if (backgroundCanvas.height !== pixelHeight) backgroundCanvas.height = pixelHeight
@@ -186,7 +227,8 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
     if (canvas.height !== pixelHeight) canvas.height = pixelHeight
     const context = canvas.getContext('2d'); if (!context) return
     context.setTransform(ratio, 0, 0, ratio, 0, 0)
-    drawWorldBackground(backgroundContext, size, camera, explored, visible, visibleObstacleCells, visibleResourceCells, obstacleSprites, resourceSprites, routeDestinationsByPosition, moveArrowsByPosition, sweepMarkersByPosition, shotMarkersByPosition)
+    drawTiledWorldTerrain(backgroundContext, size, camera, ratio, terrainScene, terrainCacheRef)
+    drawWorldPlanMarkers(backgroundContext, size, camera, routeDestinationsByPosition, moveArrowsByPosition, sweepMarkersByPosition, shotMarkersByPosition)
     const nextPositions = collectEntityPositions(state)
     const reduceMotion = typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const animationStart = performance.now()
@@ -229,7 +271,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
     }
     renderFrame(performance.now())
     return () => { if (animationFrameRef.current !== null) cancelAnimationFrame(animationFrameRef.current); animationFrameRef.current = null }
-  }, [size, camera, state, explored, visible, visibleObstacleCells, visibleResourceCells, obstacleSprites, resourceSprites, unitSprites, beaconSprite, entityGroupsByPosition, selectedId, targetableIds, routeDestinationsByPosition, moveArrowsByPosition, sweepMarkersByPosition, shotMarkersByPosition])
+  }, [size, camera, state, terrainScene, unitSprites, beaconSprite, entityGroupsByPosition, selectedId, targetableIds, routeDestinationsByPosition, moveArrowsByPosition, sweepMarkersByPosition, shotMarkersByPosition])
   useEffect(() => {
     const selected = entities.find((object) => object.id === selectedId)
     if (!selected?.position) { onAnchorChange(null); return }
@@ -314,7 +356,95 @@ function mapFeatureAnchor(position: Position, camera: Camera, size: { width: num
   return pointY > size.height / 2 ? { x, y: pointY - gap, side: 'top' } : { x, y: pointY + gap, side: 'bottom' }
 }
 
-function drawWorldBackground(ctx: CanvasRenderingContext2D, size: { width: number; height: number }, camera: Camera, explored: Map<string, ExploredCell>, visible: Set<string>, visibleObstacleCells: Set<string>, visibleResourceCells: Set<string>, obstacleSprites: HTMLImageElement[], resourceSprites: HTMLImageElement[], routeDestinations: Map<string, RouteDestination[]>, moveArrows: Map<string, MoveArrow[]>, sweepMarkers: Map<string, SweepMarker[]>, shotMarkers: Map<string, ShotMarker[]>) {
+function drawTiledWorldTerrain(
+  ctx: CanvasRenderingContext2D,
+  size: { width: number; height: number },
+  camera: Camera,
+  ratio: number,
+  scene: TerrainScene,
+  cacheRef: { current: TerrainTileCache | null },
+) {
+  let cache = cacheRef.current
+  if (!cache || cache.scene !== scene || cache.cell !== camera.cell || cache.ratio !== ratio) {
+    if (cache) releaseTerrainTiles(cache)
+    cache = { scene, cell: camera.cell, ratio, pixels: 0, tiles: new Map() }
+    cacheRef.current = cache
+  }
+
+  ctx.clearRect(0, 0, size.width, size.height)
+  const bounds = terrainChunkBounds(camera, size)
+  const visibleKeys = new Set<string>()
+  const chunkWorldSize = TERRAIN_CHUNK_CELLS * camera.cell
+  const sourceOffset = TERRAIN_CHUNK_PADDING_CELLS * camera.cell * ratio
+  const sourceSize = chunkWorldSize * ratio
+
+  for (let chunkY = bounds.minY; chunkY <= bounds.maxY; chunkY++) {
+    for (let chunkX = bounds.minX; chunkX <= bounds.maxX; chunkX++) {
+      const key = `${chunkX},${chunkY}`
+      visibleKeys.add(key)
+      let tile = cache.tiles.get(key)
+      if (!tile) {
+        tile = createTerrainTile(chunkX, chunkY, camera.cell, ratio, scene)
+        cache.tiles.set(key, tile)
+        cache.pixels += tile.pixels
+      } else {
+        cache.tiles.delete(key)
+        cache.tiles.set(key, tile)
+      }
+      const worldLeft = chunkX * TERRAIN_CHUNK_CELLS - .5
+      const worldTop = chunkY * TERRAIN_CHUNK_CELLS - .5
+      const screenX = size.width / 2 + (worldLeft - camera.x) * camera.cell
+      const screenY = size.height / 2 + (worldTop - camera.y) * camera.cell
+      ctx.drawImage(tile.canvas, sourceOffset, sourceOffset, sourceSize, sourceSize, screenX, screenY, chunkWorldSize, chunkWorldSize)
+    }
+  }
+
+  evictTerrainTiles(cache, visibleKeys)
+}
+
+function createTerrainTile(chunkX: number, chunkY: number, cell: number, ratio: number, scene: TerrainScene): CachedTerrainTile {
+  const paddedCells = TERRAIN_CHUNK_CELLS + TERRAIN_CHUNK_PADDING_CELLS * 2
+  const cssSize = paddedCells * cell
+  const canvas = document.createElement('canvas')
+  canvas.width = Math.max(1, Math.ceil(cssSize * ratio))
+  canvas.height = Math.max(1, Math.ceil(cssSize * ratio))
+  const context = canvas.getContext('2d')
+  if (!context) return { canvas, pixels: canvas.width * canvas.height }
+  context.setTransform(ratio, 0, 0, ratio, 0, 0)
+  const firstX = chunkX * TERRAIN_CHUNK_CELLS
+  const firstY = chunkY * TERRAIN_CHUNK_CELLS
+  const tileCamera: Camera = {
+    x: firstX + (TERRAIN_CHUNK_CELLS - 1) / 2,
+    y: firstY + (TERRAIN_CHUNK_CELLS - 1) / 2,
+    cell,
+  }
+  drawWorldTerrain(context, { width: cssSize, height: cssSize }, tileCamera, scene)
+  return { canvas, pixels: canvas.width * canvas.height }
+}
+
+function evictTerrainTiles(cache: TerrainTileCache, visibleKeys: Set<string>) {
+  if (cache.pixels <= TERRAIN_CACHE_PIXEL_BUDGET) return
+  for (const [key, tile] of cache.tiles) {
+    if (visibleKeys.has(key)) continue
+    cache.tiles.delete(key)
+    cache.pixels -= tile.pixels
+    tile.canvas.width = 1
+    tile.canvas.height = 1
+    if (cache.pixels <= TERRAIN_CACHE_PIXEL_BUDGET) break
+  }
+}
+
+function releaseTerrainTiles(cache: TerrainTileCache) {
+  for (const tile of cache.tiles.values()) {
+    tile.canvas.width = 1
+    tile.canvas.height = 1
+  }
+  cache.tiles.clear()
+  cache.pixels = 0
+}
+
+function drawWorldTerrain(ctx: CanvasRenderingContext2D, size: { width: number; height: number }, camera: Camera, scene: TerrainScene) {
+  const { explored, visible, visibleObstacleCells, visibleResourceCells, obstacleSprites, resourceSprites } = scene
   ctx.clearRect(0, 0, size.width, size.height); ctx.fillStyle = 'rgba(0,0,0,.18)'; ctx.fillRect(0, 0, size.width, size.height)
   const toScreen = ([x, y]: Position) => [size.width / 2 + (x - camera.x) * camera.cell, size.height / 2 + (y - camera.y) * camera.cell] as const
   const minX = Math.floor(camera.x - size.width / camera.cell / 2) - 1, maxX = Math.ceil(camera.x + size.width / camera.cell / 2) + 1
@@ -345,6 +475,12 @@ function drawWorldBackground(ctx: CanvasRenderingContext2D, size: { width: numbe
   }
   drawObstacleTerrain(ctx, renderedObstacles, camera.cell, obstacleSprites)
   for (const resource of renderedResources) drawResource(ctx, resource.position, resource.x, resource.y, camera.cell, resource.visible, resourceSprites)
+}
+
+function drawWorldPlanMarkers(ctx: CanvasRenderingContext2D, size: { width: number; height: number }, camera: Camera, routeDestinations: Map<string, RouteDestination[]>, moveArrows: Map<string, MoveArrow[]>, sweepMarkers: Map<string, SweepMarker[]>, shotMarkers: Map<string, ShotMarker[]>) {
+  const toScreen = ([x, y]: Position) => [size.width / 2 + (x - camera.x) * camera.cell, size.height / 2 + (y - camera.y) * camera.cell] as const
+  const minX = Math.floor(camera.x - size.width / camera.cell / 2) - 1, maxX = Math.ceil(camera.x + size.width / camera.cell / 2) + 1
+  const minY = Math.floor(camera.y - size.height / camera.cell / 2) - 1, maxY = Math.ceil(camera.y + size.height / camera.cell / 2) + 1
   // Ranger previews span up to three cells, so include a small marker margin
   // without scanning every planned marker on each camera frame.
   for (let y = minY - 3; y <= maxY + 3; y++) for (let x = minX - 3; x <= maxX + 3; x++) {
@@ -422,13 +558,6 @@ function groupEntitiesByPosition(objects: WorldObject[]) {
     else grouped.set(key, [object])
   }
   return grouped
-}
-
-export function prioritizeSelectionCandidates(candidates: WorldObject[], preferredSelectionId?: string) {
-  if (!preferredSelectionId) return candidates
-  const preferred = candidates.find((object) => object.id === preferredSelectionId)
-  if (!preferred) return candidates
-  return [preferred, ...candidates.filter((object) => object !== preferred)]
 }
 
 function groupRouteDestinations(destinations: RouteDestination[]) {
