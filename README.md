@@ -32,3 +32,7 @@ location / {
 The API origin can be changed without editing source code by setting the repository Actions variable `VITE_API_BASE_URL`. Because Vite substitutes this value at build time, changing it requires a new workflow run or commit.
 
 The interface supports English and Chinese. Add future locales in `src/lib/i18n.ts`; UI code uses translation keys rather than embedded labels.
+
+## License
+
+[Apache License 2.0](LICENSE)
