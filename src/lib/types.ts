@@ -9,6 +9,7 @@ export interface WorldObject {
   positions?: Position[]
   id?: string
   controlled?: boolean
+  owner_username?: string
   position?: Position
   hp?: number
   shield?: number

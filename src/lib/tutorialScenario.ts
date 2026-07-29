@@ -45,7 +45,7 @@ export function createTutorialState(step: number): PlayerState {
   const beaconCarried = step >= 12
   const objects: WorldObject[] = [
     { kind: 'OBSTACLE', positions: obstacles },
-    { kind: 'CORE', id: TUTORIAL_IDS.core, controlled: true, position: TUTORIAL_POSITIONS.core, hp: 5, shield: 5, state: 'NORMAL' },
+    { kind: 'CORE', id: TUTORIAL_IDS.core, controlled: true, owner_username: 'you', position: TUTORIAL_POSITIONS.core, hp: 5, shield: 5, state: 'NORMAL' },
     { kind: 'UNIT', id: TUTORIAL_IDS.worker, controlled: true, position: workerPosition, hp: 2, unit_type: 'WORKER', cargo: workerCargo },
     { kind: 'UNIT', id: TUTORIAL_IDS.ranger, controlled: true, position: TUTORIAL_POSITIONS.ranger, hp: 2, unit_type: 'RANGER' },
     { kind: 'UNIT', id: TUTORIAL_IDS.enemyVanguard, controlled: false, position: TUTORIAL_POSITIONS.enemyVanguard, hp: step >= 10 ? 3 : 4, unit_type: 'VANGUARD' },

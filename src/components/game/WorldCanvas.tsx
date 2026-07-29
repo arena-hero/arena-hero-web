@@ -542,12 +542,15 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
     const meterX = placements.reduce((sum, placement) => sum + placement.x, 0) / placements.length
     const meterY = placements.reduce((sum, placement) => sum + placement.y, 0) / placements.length
     const controlledCore = objects.find((object) => object.kind === 'CORE' && object.controlled === true)
+    const core = objects.find((object) => object.kind === 'CORE')
     const cargoWorker = selected?.unit_type === 'WORKER' ? selected : displayed.find((object) => object.unit_type === 'WORKER')
     const topMeterObject = selected?.kind === 'CORE' && selected.controlled ? selected : selected?.unit_type === 'WORKER' ? selected : controlledCore ?? cargoWorker
     const topMeterPlacement = placements.find(({ object }) => object === topMeterObject) ?? { x: meterX, y: meterY }
     const meterOffset = camera.cell * (objects.some((object) => object.kind === 'CORE') ? .43 : .36)
     if (topMeterObject?.kind === 'CORE') drawCoreResources(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, state.resources)
     else if (topMeterObject?.unit_type === 'WORKER' && topMeterObject.cargo !== undefined) drawWorkerCargo(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, topMeterObject.cargo, Math.max(topMeterObject.cargo, beaconBuffActive ? 2 : 1))
+    const corePlacement = core ? placements.find(({ object }) => object === core) : undefined
+    if (core?.owner_username && corePlacement) drawCoreOwnerLabel(ctx, corePlacement.x, corePlacement.y - camera.cell * .2, camera.cell, core.owner_username, core.controlled === true)
     const hp = objects.reduce((sum, object) => sum + (object.hp ?? 0), 0)
     const maxHp = objects.reduce((sum, object) => sum + maximumHealth(object), 0)
     if (maxHp > 0) {
@@ -947,6 +950,24 @@ function drawWorkerCargo(ctx: CanvasRenderingContext2D, x: number, y: number, ce
 
 function drawCoreResources(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, resources: number) {
   drawMeterBar(ctx, x, y, cell, resources, CORE_RESOURCE_REFERENCE, RESOURCE_GREEN, RESOURCE_GREEN_LIGHT, String(resources))
+}
+
+function drawCoreOwnerLabel(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, username: string, controlled: boolean) {
+  const label = `@${username}`
+  let fontSize = Math.max(8, Math.min(10, cell * .17))
+  const maxWidth = cell * .95
+  ctx.save()
+  ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`
+  const measured = ctx.measureText(label).width
+  if (measured > maxWidth) {
+    fontSize = Math.max(7, fontSize * maxWidth / measured)
+    ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`
+  }
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.lineJoin = 'round'
+  ctx.lineWidth = Math.max(2, fontSize * .28); ctx.strokeStyle = 'rgba(0,0,0,.9)'; ctx.strokeText(label, x, y)
+  ctx.fillStyle = controlled ? PRIMARY_BLUE_LIGHT : '#e9a0aa'
+  ctx.shadowColor = 'rgba(0,0,0,.9)'; ctx.shadowBlur = 2; ctx.shadowOffsetY = 1; ctx.fillText(label, x, y)
+  ctx.restore()
 }
 
 function maximumHealth(object: WorldObject) {
