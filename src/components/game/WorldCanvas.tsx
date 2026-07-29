@@ -516,7 +516,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
   ctx.clearRect(0, 0, size.width, size.height)
   const toScreen = ([x, y]: Position) => [size.width / 2 + (x - camera.x) * camera.cell, size.height / 2 + (y - camera.y) * camera.cell] as const
   let beaconPoint = toScreen(state.champion_beacon.position)
-  let beaconAttached = false
+  let carriedBeaconDrawn = false
   const beaconCarried = state.champion_beacon.status === 'CARRIED'
   const beaconBuffActive = state.champion_beacon.status === 'CARRIED' && state.objects.some((object) => object.controlled === true && object.id === state.champion_beacon.carrier_id)
   // A grounded Beacon is terrain-sized, so paint it below entities sharing its
@@ -536,9 +536,12 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
     const beaconCarrier = beaconCarried ? placements.find(({ object }) => object.id === state.champion_beacon.carrier_id) : undefined
     if (beaconCarrier) {
       beaconPoint = [beaconCarrier.x + camera.cell * .22, beaconCarrier.y - camera.cell * .22]
-      beaconAttached = true
     }
     placements.forEach(({ object, x, y }) => drawEntity(ctx, x, y, camera.cell, object, object.id === selectedId, Boolean(object.id && targetableIds.has(object.id)), selectionProgress, unitSprites))
+    if (beaconCarrier) {
+      drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, true, beaconSprite)
+      carriedBeaconDrawn = true
+    }
     const meterX = placements.reduce((sum, placement) => sum + placement.x, 0) / placements.length
     const meterY = placements.reduce((sum, placement) => sum + placement.y, 0) / placements.length
     const controlledCore = objects.find((object) => object.kind === 'CORE' && object.controlled === true)
@@ -560,7 +563,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
       drawHealthBar(ctx, meterX, healthY, camera.cell, hp, maxHp, color)
     }
   }
-  if (beaconCarried) drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, beaconAttached, beaconSprite)
+  if (beaconCarried && !carriedBeaconDrawn) drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, false, beaconSprite)
   for (const marker of resolvedSweeps) drawResolvedSweep(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, sweepProgress)
   for (const marker of resolvedShots) drawResolvedShot(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, shotProgress, marker.hit)
 }
