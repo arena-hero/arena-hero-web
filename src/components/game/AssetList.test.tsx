@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest'
 import '../../lib/i18n'
 import { AssetList } from './AssetList'
 
-const state = { status: 'ACTIVE' as const, resources: 42, population: 6, population_tier: 0, upkeep_next_tick: 1, champion_beacon: { position: [0, 0] as [number, number] }, objects: [], events: [] }
+const state = { status: 'ACTIVE' as const, resources: 28, population: 6, population_tier: 0, upkeep_next_tick: 1, champion_beacon: { position: [0, 0] as [number, number] }, objects: [], events: [] }
 
 describe('AssetList', () => {
   it('places game stats below the Arena Hero title', () => {
@@ -15,7 +15,8 @@ describe('AssetList', () => {
     expect(screen.getByRole('heading', { name: 'FLEET INDEX Your assets' })).toBeInTheDocument()
     expect(title.compareDocumentPosition(stats) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(stats.compareDocumentPosition(fleetTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(screen.getByText('Resources')).toBeInTheDocument()
+    expect(screen.getByText('28/30')).toBeInTheDocument()
+    expect(screen.getByText('Resources / capacity')).toBeInTheDocument()
     expect(screen.getByText('Population')).toBeInTheDocument()
     expect(screen.getByText('Next upkeep')).toBeInTheDocument()
   })

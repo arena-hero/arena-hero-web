@@ -1,12 +1,14 @@
 import { useTranslation } from 'react-i18next'
+import { coreResourceCapacity } from '../../lib/gameRules'
 import { STAT_ICON_PATHS } from '../../lib/statArt'
 import type { PlayerState } from '../../lib/types'
 
 export function GameStats({ state, className = '' }: { state?: PlayerState; className?: string }) {
   const { t } = useTranslation()
   if (!state) return null
+  const resourceCapacity = coreResourceCapacity(state.population)
   const items = [
-    { label: t('game.resources'), value: state.resources, icon: STAT_ICON_PATHS.resources },
+    { label: t('game.resourceCapacity'), value: `${state.resources}/${resourceCapacity}`, icon: STAT_ICON_PATHS.resources },
     { label: t('game.population'), value: state.population, icon: STAT_ICON_PATHS.population },
     { label: t('game.upkeep'), value: state.upkeep_next_tick, icon: STAT_ICON_PATHS.upkeep },
   ]

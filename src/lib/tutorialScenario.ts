@@ -40,7 +40,7 @@ export function createTutorialState(step: number): PlayerState {
       : step >= 4 ? TUTORIAL_POSITIONS.resource
         : TUTORIAL_POSITIONS.worker
   const workerCargo = step === 5 || step === 6 ? 1 : 0
-  const resources = step >= 9 ? 11 : step >= 7 ? 21 : 20
+  const resources = step >= 9 ? 0 : step >= 7 ? 10 : 9
   const vanguardSpawned = step >= 9
   const beaconCarried = step >= 12
   const objects: WorldObject[] = [

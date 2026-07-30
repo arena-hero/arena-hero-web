@@ -5,6 +5,11 @@ export const RESPAWN_DELAY_TICKS = 20
 export const CORE_MAX_HP = 5
 export const CORE_MAX_SHIELD = 5
 export const CORE_BEACON_MAX_SHIELD = 10
+export const CORE_RESOURCE_CAPACITY_PER_UNIT = 5
+
+export function coreResourceCapacity(population: number) {
+  return Math.max(0, population) * CORE_RESOURCE_CAPACITY_PER_UNIT
+}
 
 export function playerOwnsChampionBeacon(state: PlayerState) {
   const carrierId = state.champion_beacon.status === 'CARRIED' ? state.champion_beacon.carrier_id : undefined

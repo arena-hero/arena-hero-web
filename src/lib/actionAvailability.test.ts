@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { PlayerState, WorldObject } from './types'
 import { getActionAvailability } from './actionAvailability'
 
-const state = (objects: WorldObject[], resources = 0): PlayerState => ({ status: 'ACTIVE', resources, population: 0, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, objects, events: [] })
+const state = (objects: WorldObject[], resources = 0): PlayerState => ({ status: 'ACTIVE', resources, population: objects.filter((object) => object.kind === 'UNIT' && object.controlled).length, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, objects, events: [] })
 
 describe('getActionAvailability', () => {
   it('only lets an empty worker harvest on a resource point', () => {
@@ -16,6 +16,7 @@ describe('getActionAvailability', () => {
     const worker: WorldObject = { kind: 'UNIT', id: 'worker', controlled: true, position: [2, 3], hp: 2, unit_type: 'WORKER', cargo: 1 }
     const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [2, 3], hp: 5, shield: 5, state: 'NORMAL' }
     expect(getActionAvailability(state([worker, core]), worker).actions.DEPOSIT).toBe(true)
+    expect(getActionAvailability(state([worker, core], 5), worker).actions.DEPOSIT).toBe(false)
     expect(getActionAvailability(state([worker, { ...core, state: 'MOVING' }]), worker).actions.DEPOSIT).toBe(false)
   })
 

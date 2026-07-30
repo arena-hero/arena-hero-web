@@ -4,7 +4,7 @@ import { BEACON_SPRITE_PATH, beaconSpriteRect } from '../../lib/beaconArt'
 import { resolvedShotMarkers, resolvedSweepMarkers, type ResolvedShotMarker } from '../../lib/combatAnimation'
 import type { ShotMarker, SweepMarker } from '../../lib/combatPreview'
 import type { ExploredCell } from '../../lib/exploration'
-import { CORE_MAX_HP } from '../../lib/gameRules'
+import { CORE_MAX_HP, coreResourceCapacity } from '../../lib/gameRules'
 import { mapFeaturesAt, type MapFeatureView } from '../../lib/mapFeatures'
 import { collectEntityPositions, continueOrStartMotionAnimation, interpolatePosition, type EntityMotion, type EntityMotionAnimation } from '../../lib/movementAnimation'
 import type { MoveArrow } from '../../lib/movementPreview'
@@ -45,7 +45,6 @@ interface Props {
 export interface RouteDestination { objectId: string; position: Position; blocked: boolean; selectable?: boolean; immediate?: boolean }
 
 type Camera = WorldCamera
-const CORE_RESOURCE_REFERENCE = 20
 const MOVE_ANIMATION_MS = 420
 const SWEEP_ANIMATION_MS = 560
 const SHOT_ANIMATION_MS = 520
@@ -550,7 +549,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
     const topMeterObject = selected?.kind === 'CORE' && selected.controlled ? selected : selected?.unit_type === 'WORKER' ? selected : controlledCore ?? cargoWorker
     const topMeterPlacement = placements.find(({ object }) => object === topMeterObject) ?? { x: meterX, y: meterY }
     const meterOffset = camera.cell * (objects.some((object) => object.kind === 'CORE') ? .43 : .36)
-    if (topMeterObject?.kind === 'CORE') drawCoreResources(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, state.resources)
+    if (topMeterObject?.kind === 'CORE') drawCoreResources(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, state.resources, coreResourceCapacity(state.population))
     else if (topMeterObject?.unit_type === 'WORKER' && topMeterObject.cargo !== undefined) drawWorkerCargo(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, topMeterObject.cargo, Math.max(topMeterObject.cargo, beaconBuffActive ? 2 : 1))
     const corePlacement = core ? placements.find(({ object }) => object === core) : undefined
     if (core?.owner_username && corePlacement) drawCoreOwnerLabel(ctx, corePlacement.x, corePlacement.y - camera.cell * .2, camera.cell, core.owner_username, core.controlled === true)
@@ -951,8 +950,8 @@ function drawWorkerCargo(ctx: CanvasRenderingContext2D, x: number, y: number, ce
   drawMeterBar(ctx, x, y, cell, cargo, capacity, RESOURCE_GREEN, RESOURCE_GREEN_LIGHT)
 }
 
-function drawCoreResources(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, resources: number) {
-  drawMeterBar(ctx, x, y, cell, resources, CORE_RESOURCE_REFERENCE, RESOURCE_GREEN, RESOURCE_GREEN_LIGHT, String(resources))
+function drawCoreResources(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, resources: number, capacity: number) {
+  drawMeterBar(ctx, x, y, cell, resources, capacity, RESOURCE_GREEN, RESOURCE_GREEN_LIGHT)
 }
 
 function drawCoreOwnerLabel(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, username: string, controlled: boolean) {
@@ -990,7 +989,7 @@ function drawHealthBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell
 }
 
 function drawMeterBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, value: number, maximum: number, color: string, labelColor: string, displayLabel = `${value}/${maximum}`) {
-  const gap = cell * .04, maxWidth = cell * .86, barHeight = cell * .06, ratio = Math.max(0, Math.min(1, value / maximum))
+  const gap = cell * .04, maxWidth = cell * .86, barHeight = cell * .06, ratio = maximum > 0 ? Math.max(0, Math.min(1, value / maximum)) : 0
   let fontSize = cell * .15
   ctx.save(); ctx.font = `600 ${fontSize}px "JetBrains Mono", monospace`; ctx.textBaseline = 'middle'
   let labelWidth = ctx.measureText(displayLabel).width

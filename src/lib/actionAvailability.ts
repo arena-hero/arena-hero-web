@@ -1,6 +1,6 @@
 import type { CommandPlan, CoreActionType, PlayerState, UnitActionType, UnitType, WorldObject } from './types'
 import { rangerTargets } from './combatPreview'
-import { coreShieldLimit, MAX_ENTITIES_PER_CELL } from './gameRules'
+import { coreResourceCapacity, coreShieldLimit, MAX_ENTITIES_PER_CELL } from './gameRules'
 import { moveTargets, projectedEntityCount } from './movementPreview'
 
 export type AvailableAction = UnitActionType | CoreActionType
@@ -44,7 +44,8 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
   if (selected.unit_type === 'WORKER') {
     const resource = state.objects.find((object) => object.kind === 'RESOURCE' && object.positions?.some((position) => samePosition(position, selected.position!)))
     const core = state.objects.find((object) => object.kind === 'CORE' && object.controlled === true && object.state !== 'MOVING' && object.position && samePosition(object.position, selected.position!))
-    return { actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: (selected.cargo ?? 0) > 0 && Boolean(core), ...beaconActions, WAIT: true }, spawns: unavailable.spawns }
+    const coreHasResourceSpace = state.resources < coreResourceCapacity(state.population)
+    return { actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: (selected.cargo ?? 0) > 0 && Boolean(core) && coreHasResourceSpace, ...beaconActions, WAIT: true }, spawns: unavailable.spawns }
   }
   if (selected.unit_type === 'VANGUARD') {
     const canSweep = state.objects.some((object) => object.controlled === false && object.position && Math.abs(object.position[0] - selected.position![0]) + Math.abs(object.position[1] - selected.position![1]) === 1)
