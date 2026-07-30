@@ -6,9 +6,10 @@ export const CORE_MAX_HP = 5
 export const CORE_MAX_SHIELD = 5
 export const CORE_BEACON_MAX_SHIELD = 10
 export const CORE_RESOURCE_CAPACITY_PER_UNIT = 5
+export const CORE_RESOURCE_MINIMUM_CAPACITY = 10
 
 export function coreResourceCapacity(population: number) {
-  return Math.max(0, population) * CORE_RESOURCE_CAPACITY_PER_UNIT
+  return Math.max(CORE_RESOURCE_MINIMUM_CAPACITY, Math.max(0, population) * CORE_RESOURCE_CAPACITY_PER_UNIT)
 }
 
 export function playerOwnsChampionBeacon(state: PlayerState) {

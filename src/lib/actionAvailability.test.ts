@@ -16,9 +16,9 @@ describe('getActionAvailability', () => {
     const worker: WorldObject = { kind: 'UNIT', id: 'worker', controlled: true, position: [2, 3], hp: 2, unit_type: 'WORKER', cargo: 1 }
     const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [2, 3], hp: 5, shield: 5, state: 'NORMAL' }
     expect(getActionAvailability(state([worker, core]), worker).actions.DEPOSIT).toBe(true)
-    const fullCore = getActionAvailability(state([worker, core], 5), worker)
+    const fullCore = getActionAvailability(state([worker, core], 10), worker)
     expect(fullCore.actions.DEPOSIT).toBe(false)
-    expect(fullCore.unavailableReasons?.DEPOSIT).toEqual({ code: 'CORE_RESOURCE_FULL', capacity: 5 })
+    expect(fullCore.unavailableReasons?.DEPOSIT).toEqual({ code: 'CORE_RESOURCE_FULL', capacity: 10 })
     expect(getActionAvailability(state([worker, { ...core, state: 'MOVING' }]), worker).actions.DEPOSIT).toBe(false)
   })
 

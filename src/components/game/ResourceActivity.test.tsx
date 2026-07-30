@@ -72,7 +72,7 @@ describe('ResourceActivity', () => {
       position: [0, 0],
       values: { capacity: 15 },
     }]} />)
-    expect(screen.getByText('Resource storage is full. Capacity is population × 5 (currently 15).')).toBeInTheDocument()
+    expect(screen.getByText('Resource storage is full. Capacity is at least 10, then population × 5 (currently 15).')).toBeInTheDocument()
     expect(screen.getByText('[0, 0]')).toBeInTheDocument()
   })
 })
