@@ -8,6 +8,12 @@ export type AvailableAction = UnitActionType | CoreActionType
 export interface ActionAvailability {
   actions: Partial<Record<AvailableAction, boolean>>
   spawns: Record<UnitType, boolean>
+  unavailableReasons?: Partial<Record<AvailableAction, UnavailableActionReason>>
+}
+
+export interface UnavailableActionReason {
+  code: 'CORE_RESOURCE_FULL'
+  capacity: number
 }
 
 export const UNIT_COST: Record<UnitType, number> = { WORKER: 5, VANGUARD: 10, RANGER: 12 }
@@ -44,8 +50,14 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
   if (selected.unit_type === 'WORKER') {
     const resource = state.objects.find((object) => object.kind === 'RESOURCE' && object.positions?.some((position) => samePosition(position, selected.position!)))
     const core = state.objects.find((object) => object.kind === 'CORE' && object.controlled === true && object.state !== 'MOVING' && object.position && samePosition(object.position, selected.position!))
-    const coreHasResourceSpace = state.resources < coreResourceCapacity(state.population)
-    return { actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: (selected.cargo ?? 0) > 0 && Boolean(core) && coreHasResourceSpace, ...beaconActions, WAIT: true }, spawns: unavailable.spawns }
+    const resourceCapacity = coreResourceCapacity(state.population)
+    const coreHasResourceSpace = state.resources < resourceCapacity
+    const canReachCoreStorage = (selected.cargo ?? 0) > 0 && Boolean(core)
+    return {
+      actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: canReachCoreStorage && coreHasResourceSpace, ...beaconActions, WAIT: true },
+      spawns: unavailable.spawns,
+      unavailableReasons: canReachCoreStorage && !coreHasResourceSpace ? { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: resourceCapacity } } : undefined,
+    }
   }
   if (selected.unit_type === 'VANGUARD') {
     const canSweep = state.objects.some((object) => object.controlled === false && object.position && Math.abs(object.position[0] - selected.position![0]) + Math.abs(object.position[1] - selected.position![1]) === 1)

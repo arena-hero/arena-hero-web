@@ -1,18 +1,43 @@
 import type { GameEvent, Position } from './types'
 
-export interface ResourceActivityItem {
+interface ResourceAmountActivityItem {
   eventId: string
   kind: 'DESTROYED' | 'DROPPED' | 'RECOVERED'
   amount: number
   position: Position
 }
 
+interface ResourceFullActivityItem {
+  eventId: string
+  kind: 'FULL'
+  capacity: number
+  position: Position
+}
+
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceFullActivityItem
+
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
+    if (!event.position) return []
+    const capacity = event.values?.capacity
+    if (
+      event.event_type === 'DEPOSIT_FAILED'
+      && event.reason_code === 'CORE_RESOURCE_FULL'
+      && typeof capacity === 'number'
+      && Number.isSafeInteger(capacity)
+      && capacity >= 0
+    ) {
+      return [{
+        eventId: event.event_id,
+        kind: 'FULL',
+        capacity,
+        position: event.position,
+      }]
+    }
+
     const amount = event.values?.amount
     if (
-      !event.position
-      || !Number.isSafeInteger(amount)
+      !Number.isSafeInteger(amount)
       || typeof amount !== 'number'
       || amount <= 0
     ) return []

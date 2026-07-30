@@ -62,4 +62,17 @@ describe('ResourceActivity', () => {
     }]} />)
     expect(screen.getByText('Worker 掉落了 2 点资源')).toBeInTheDocument()
   })
+
+  it('shows the Core limit when any client attempts a full deposit', () => {
+    render(<ResourceActivity events={[{
+      event_id: 'full',
+      tick: 8,
+      event_type: 'DEPOSIT_FAILED',
+      reason_code: 'CORE_RESOURCE_FULL',
+      position: [0, 0],
+      values: { capacity: 15 },
+    }]} />)
+    expect(screen.getByText('Resource storage is full. Capacity is population × 5 (currently 15).')).toBeInTheDocument()
+    expect(screen.getByText('[0, 0]')).toBeInTheDocument()
+  })
 })

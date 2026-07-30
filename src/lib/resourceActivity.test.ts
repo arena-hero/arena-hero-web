@@ -50,4 +50,20 @@ describe('resourceActivityFromEvents', () => {
       },
     ])).toEqual([])
   })
+
+  it('returns a full-storage notice from a failed deposit', () => {
+    expect(resourceActivityFromEvents([{
+      event_id: 'full',
+      tick: 8,
+      event_type: 'DEPOSIT_FAILED',
+      reason_code: 'CORE_RESOURCE_FULL',
+      position: [0, 0],
+      values: { capacity: 15 },
+    }])).toEqual([{
+      eventId: 'full',
+      kind: 'FULL',
+      capacity: 15,
+      position: [0, 0],
+    }])
+  })
 })

@@ -16,6 +16,17 @@ describe('UnitActionDialog', () => {
     expect(screen.getByRole('button', { name: 'Wait' })).toBeEnabled()
   })
 
+  it('explains the population-based limit when a full Core blocks a deposit', async () => {
+    const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={{ ...selected, cargo: 1 }} plan={plan} phase="open" resources={5} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false }, unavailableReasons: { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: 5 } } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
+    const deposit = screen.getByRole('button', { name: 'Deposit' })
+    expect(deposit).toHaveAttribute('aria-disabled', 'true')
+    await user.click(deposit)
+    expect(screen.getByRole('alert')).toHaveTextContent('Resource storage is full. Capacity is population × 5 (currently 5).')
+    expect(onUnitAction).not.toHaveBeenCalled()
+    expect(onClose).not.toHaveBeenCalled()
+  })
+
   it('can explicitly override an Agent action with WAIT', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
     render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)

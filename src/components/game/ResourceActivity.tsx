@@ -1,4 +1,4 @@
-import { PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
+import { CircleAlert, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resourceActivityFromEvents } from '../../lib/resourceActivity'
@@ -24,12 +24,16 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
     </h2>
     <ul className="divide-y divide-white/[.055]">
       {visibleItems.map((item) => {
-        const Icon = item.kind === 'DROPPED'
+        const Icon = item.kind === 'FULL'
+          ? CircleAlert
+          : item.kind === 'DROPPED'
           ? PackageOpen
           : item.kind === 'DESTROYED'
             ? Trash2
             : Pickaxe
-        const translationKey = item.kind === 'DROPPED'
+        const translationKey = item.kind === 'FULL'
+          ? 'game.coreResourceFull'
+          : item.kind === 'DROPPED'
           ? 'game.cargoDropped'
           : item.kind === 'DESTROYED'
             ? 'game.resourceOverflowDestroyed'
@@ -38,14 +42,16 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
           <Icon
             aria-hidden="true"
             size={15}
-            className={item.kind === 'DROPPED'
+            className={item.kind === 'FULL'
+              ? 'text-amber-300'
+              : item.kind === 'DROPPED'
               ? 'text-violet-300'
               : item.kind === 'DESTROYED'
                 ? 'text-red-300'
                 : 'text-cyan-signal'}
           />
           <span className="min-w-0 flex-1 text-[11px] leading-4 text-zinc-300">
-            {t(translationKey, { count: item.amount })}
+            {item.kind === 'FULL' ? t(translationKey, { capacity: item.capacity }) : t(translationKey, { count: item.amount })}
           </span>
           <span className="shrink-0 font-mono text-[9px] text-zinc-500">
             [{item.position.join(', ')}]
