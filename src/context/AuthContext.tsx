@@ -5,7 +5,7 @@ import type { User } from '../lib/types'
 interface AuthValue {
   user: User | null
   loading: boolean
-  refresh: () => Promise<void>
+  refresh: () => Promise<boolean>
   login: (email: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }
@@ -17,7 +17,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(!demo)
   const refresh = useCallback(async () => {
-    try { setUser(await api.me()) } catch { setUser(null) } finally { setLoading(false) }
+    try {
+      setUser(await api.me())
+      return true
+    } catch {
+      setUser(null)
+      return false
+    } finally {
+      setLoading(false)
+    }
   }, [])
   useEffect(() => { if (!demo) void refresh() }, [demo, refresh])
   const login = useCallback(async (email: string, password: string) => { await api.login(email, password); await refresh() }, [refresh])

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Link, useNavigate } from 'react-router'
 import { AuthCard, FormError, FormField } from '../../components/auth/AuthCard'
+import { useAuth } from '../../context/AuthContext'
 import { api, APIError, apiURL, setCSRF } from '../../lib/api'
 import { getErrorMessage } from '../../lib/errorMessage'
 import { isValidUsername, normalizeUsername, USERNAME_PATTERN_SOURCE } from '../../lib/username'
@@ -12,6 +13,7 @@ type UsernameErrorKey = '' | 'errors.usernameRequired' | 'errors.usernameInvalid
 
 export function OAuthPage({ provider }: { provider: OAuthProvider }) {
   const { t } = useTranslation()
+  const { refresh } = useAuth()
   const navigate = useNavigate()
   const [fragment] = useState(() => location.hash.slice(1))
   const params = useMemo(() => new URLSearchParams(fragment), [fragment])
@@ -34,7 +36,11 @@ export function OAuthPage({ provider }: { provider: OAuthProvider }) {
   useEffect(() => {
     if (csrf) setCSRF(csrf)
     if (!success) return
-    void api.me().then(() => {
+    void refresh().then((authenticated) => {
+      if (!authenticated) {
+        setErrorCode(isGitHub ? 'GITHUB_OAUTH_FAILED' : 'LINUX_DO_OAUTH_FAILED')
+        return
+      }
       if (linkFlow && window.opener) {
         window.opener.postMessage({ type: 'arena-hero:github-linked' }, window.location.origin)
         window.close()
@@ -42,7 +48,7 @@ export function OAuthPage({ provider }: { provider: OAuthProvider }) {
         navigate('/arena', { replace: true })
       }
     }).catch(() => setErrorCode(isGitHub ? 'GITHUB_OAUTH_FAILED' : 'LINUX_DO_OAUTH_FAILED')).finally(() => setBusy(false))
-  }, [csrf, isGitHub, linkFlow, navigate, success])
+  }, [csrf, isGitHub, linkFlow, navigate, refresh, success])
 
   const updateUsername = (value: string) => {
     setUsername(value.toLowerCase())
@@ -69,6 +75,10 @@ export function OAuthPage({ provider }: { provider: OAuthProvider }) {
     try {
       const session = await api.completeOAuthSignup(provider, signupToken, normalized)
       setCSRF(session.csrf_token)
+      if (!await refresh()) {
+        setErrorCode(isGitHub ? 'GITHUB_OAUTH_FAILED' : 'LINUX_DO_OAUTH_FAILED')
+        return
+      }
       navigate('/arena', { replace: true })
     } catch (cause) {
       const code = cause instanceof APIError ? cause.code : 'REQUEST_FAILED'

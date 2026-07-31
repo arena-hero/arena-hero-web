@@ -1,14 +1,18 @@
 import { act, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { MemoryRouter } from 'react-router'
+import { MemoryRouter, Route, Routes } from 'react-router'
 import i18n from '../../lib/i18n'
 import { APIError } from '../../lib/api'
-import { GitHubPage } from './GitHubPage'
+import { GitHubPage, LinuxDOPage } from './GitHubPage'
 
 const apiMock = vi.hoisted(() => ({
   completeOAuthSignup: vi.fn(),
-  me: vi.fn(),
+}))
+const authMock = vi.hoisted(() => ({ refresh: vi.fn() }))
+
+vi.mock('../../context/AuthContext', () => ({
+  useAuth: () => ({ refresh: authMock.refresh }),
 }))
 
 vi.mock('../../lib/api', async () => {
@@ -18,7 +22,6 @@ vi.mock('../../lib/api', async () => {
     api: {
       ...actual.api,
       completeOAuthSignup: apiMock.completeOAuthSignup,
-      me: apiMock.me,
     },
   }
 })
@@ -26,7 +29,8 @@ vi.mock('../../lib/api', async () => {
 describe('GitHubPage', () => {
   beforeEach(async () => {
     apiMock.completeOAuthSignup.mockReset()
-    apiMock.me.mockReset()
+    authMock.refresh.mockReset()
+    authMock.refresh.mockResolvedValue(true)
     await i18n.changeLanguage('en')
   })
 
@@ -74,11 +78,32 @@ describe('GitHubPage', () => {
 
   it('uses a neutral loading title after a successful sign-in callback', () => {
     window.history.replaceState({}, '', '/auth/github#success=1&csrf_token=csrf-token')
-    apiMock.me.mockReturnValue(new Promise(() => {}))
+    authMock.refresh.mockReturnValue(new Promise(() => {}))
     render(<MemoryRouter><GitHubPage /></MemoryRouter>)
 
     expect(screen.getByRole('heading', { name: 'Signing in…' })).toBeInTheDocument()
     expect(screen.queryByText('Sign-in needs your attention')).not.toBeInTheDocument()
+  })
+
+  it('refreshes the authenticated user before entering the arena after LINUX DO signup', async () => {
+    window.history.replaceState({}, '', '/auth/linux-do#signup_token=one-time-token')
+    apiMock.completeOAuthSignup.mockResolvedValue({
+      csrf_token: 'csrf-token',
+      expires_at: '2026-08-01T00:00:00Z',
+      username: 'hero',
+    })
+    const user = userEvent.setup()
+    render(<MemoryRouter initialEntries={['/auth/linux-do']}><Routes>
+      <Route path="/auth/linux-do" element={<LinuxDOPage />} />
+      <Route path="/arena" element={<div>Arena route</div>} />
+    </Routes></MemoryRouter>)
+
+    await user.type(screen.getByRole('textbox', { name: 'Username' }), 'hero')
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+
+    expect(await screen.findByText('Arena route')).toBeInTheDocument()
+    expect(apiMock.completeOAuthSignup).toHaveBeenCalledWith('linux-do', 'one-time-token', 'hero')
+    expect(authMock.refresh).toHaveBeenCalledOnce()
   })
 
   it('keeps GitHub link failures inside the link flow', () => {
