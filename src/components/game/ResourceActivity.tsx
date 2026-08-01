@@ -24,25 +24,31 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
     </h2>
     <ul className="divide-y divide-white/[.055]">
       {visibleItems.map((item) => {
-        const Icon = item.kind === 'FULL'
+        const Icon = item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
           ? CircleAlert
           : item.kind === 'DROPPED'
           ? PackageOpen
           : item.kind === 'DESTROYED'
             ? Trash2
             : Pickaxe
-        const translationKey = item.kind === 'FULL'
-          ? 'game.coreResourceFull'
-          : item.kind === 'DROPPED'
-          ? 'game.cargoDropped'
-          : item.kind === 'DESTROYED'
-            ? 'game.resourceOverflowDestroyed'
-            : 'game.cargoRecovered'
+        const message = item.kind === 'FULL'
+          ? t('game.coreResourceFull', { capacity: item.capacity })
+          : item.kind === 'DEPOSIT_FAILED'
+            ? t(item.reason === 'CORE_MOVING'
+              ? 'game.depositCoreMoving'
+              : item.reason === 'CORE_NOT_PRESENT'
+                ? 'game.depositCoreNotPresent'
+                : 'game.depositWorkerEmpty')
+            : item.kind === 'DROPPED'
+              ? t('game.cargoDropped', { count: item.amount })
+              : item.kind === 'DESTROYED'
+                ? t('game.resourceOverflowDestroyed', { count: item.amount })
+                : t('game.cargoRecovered', { count: item.amount })
         return <li key={item.eventId} className="flex min-h-11 items-center gap-2.5 px-3.5 py-2">
           <Icon
             aria-hidden="true"
             size={15}
-            className={item.kind === 'FULL'
+            className={item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
               ? 'text-amber-300'
               : item.kind === 'DROPPED'
               ? 'text-violet-300'
@@ -51,7 +57,7 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
                 : 'text-cyan-signal'}
           />
           <span className="min-w-0 flex-1 text-[11px] leading-4 text-zinc-300">
-            {item.kind === 'FULL' ? t(translationKey, { capacity: item.capacity }) : t(translationKey, { count: item.amount })}
+            {message}
           </span>
           <span className="shrink-0 font-mono text-[9px] text-zinc-500">
             [{item.position.join(', ')}]

@@ -75,4 +75,15 @@ describe('ResourceActivity', () => {
     expect(screen.getByText('Resource storage is full. Capacity is at least 10, then population × 5 (currently 15).')).toBeInTheDocument()
     expect(screen.getByText('[0, 0]')).toBeInTheDocument()
   })
+
+  it('explains a deposit rejected because the Core started moving', () => {
+    render(<ResourceActivity events={[{
+      event_id: 'moving',
+      tick: 8,
+      event_type: 'DEPOSIT_FAILED',
+      reason_code: 'CORE_MOVING',
+      position: [0, 0],
+    }]} />)
+    expect(screen.getByText('Deposit failed: the Core started moving this Tick.')).toBeInTheDocument()
+  })
 })

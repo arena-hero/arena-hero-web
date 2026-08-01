@@ -14,7 +14,16 @@ interface ResourceFullActivityItem {
   position: Position
 }
 
-export type ResourceActivityItem = ResourceAmountActivityItem | ResourceFullActivityItem
+type DepositFailureReason = 'WORKER_EMPTY' | 'CORE_NOT_PRESENT' | 'CORE_MOVING'
+
+interface DepositFailureActivityItem {
+  eventId: string
+  kind: 'DEPOSIT_FAILED'
+  reason: DepositFailureReason
+  position: Position
+}
+
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceFullActivityItem | DepositFailureActivityItem
 
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
@@ -31,6 +40,19 @@ export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivit
         eventId: event.event_id,
         kind: 'FULL',
         capacity,
+        position: event.position,
+      }]
+    }
+    if (
+      event.event_type === 'DEPOSIT_FAILED'
+      && (event.reason_code === 'WORKER_EMPTY'
+        || event.reason_code === 'CORE_NOT_PRESENT'
+        || event.reason_code === 'CORE_MOVING')
+    ) {
+      return [{
+        eventId: event.event_id,
+        kind: 'DEPOSIT_FAILED',
+        reason: event.reason_code,
         position: event.position,
       }]
     }

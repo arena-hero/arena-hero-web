@@ -2,6 +2,7 @@ import type {
   CommandPlan,
   CommandSource,
   CoreAction,
+  PlayerState,
   ReceivedNotice,
   UnitAction,
 } from './types'
@@ -27,6 +28,43 @@ export interface CommandPlanSources {
 
 export interface EffectiveCommandPlan extends CommandPlanSources {
   plan: CommandPlan
+}
+
+export function prepareManualUnitActionPlan(
+  state: PlayerState,
+  receipts: CommandReceipts,
+  plan: CommandPlan,
+  unitId: string,
+  action: UnitAction | null,
+): CommandPlan {
+  const unitActions = { ...plan.unit_actions }
+  if (action) unitActions[unitId] = action
+  else delete unitActions[unitId]
+
+  const nextPlan = { ...plan, unit_actions: unitActions }
+  if (action?.type !== 'DEPOSIT') return nextPlan
+
+  const worker = state.objects.find((object) =>
+    object.kind === 'UNIT'
+    && object.unit_type === 'WORKER'
+    && object.controlled === true
+    && object.id === unitId
+    && object.position,
+  )
+  const core = state.objects.find((object) =>
+    object.kind === 'CORE'
+    && object.controlled === true
+    && object.state !== 'MOVING'
+    && object.position
+    && worker?.position
+    && samePosition(object.position, worker.position),
+  )
+  if (!core) return nextPlan
+
+  const effective = mergeCommandPlans(plan.tick, receipts, plan)
+  return effective.plan.core_action?.type === 'START_MOVE'
+    ? { ...nextPlan, core_action: { type: 'WAIT' } }
+    : nextPlan
 }
 
 export function mergeCommandPlans(
@@ -100,4 +138,8 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function onlyKeys(value: Record<string, unknown>, allowed: string[]) {
   const keys = new Set(allowed)
   return Object.keys(value).every((key) => keys.has(key))
+}
+
+function samePosition(left: [number, number], right: [number, number]) {
+  return left[0] === right[0] && left[1] === right[1]
 }

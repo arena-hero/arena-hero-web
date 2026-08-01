@@ -66,4 +66,16 @@ describe('resourceActivityFromEvents', () => {
       position: [0, 0],
     }])
   })
+
+  it('returns notices for other deposit failures', () => {
+    expect(resourceActivityFromEvents([
+      { event_id: 'moving', tick: 8, event_type: 'DEPOSIT_FAILED', reason_code: 'CORE_MOVING', position: [0, 0] },
+      { event_id: 'missing', tick: 8, event_type: 'DEPOSIT_FAILED', reason_code: 'CORE_NOT_PRESENT', position: [1, 0] },
+      { event_id: 'empty', tick: 8, event_type: 'DEPOSIT_FAILED', reason_code: 'WORKER_EMPTY', position: [2, 0] },
+    ])).toEqual([
+      { eventId: 'moving', kind: 'DEPOSIT_FAILED', reason: 'CORE_MOVING', position: [0, 0] },
+      { eventId: 'missing', kind: 'DEPOSIT_FAILED', reason: 'CORE_NOT_PRESENT', position: [1, 0] },
+      { eventId: 'empty', kind: 'DEPOSIT_FAILED', reason: 'WORKER_EMPTY', position: [2, 0] },
+    ])
+  })
 })

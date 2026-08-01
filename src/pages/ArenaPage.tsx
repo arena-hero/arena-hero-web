@@ -17,7 +17,7 @@ import { getErrorMessage } from '../lib/errorMessage'
 import { getActionAvailability } from '../lib/actionAvailability'
 import { coreDestroyerFromEvents } from '../lib/destruction'
 import { applyAutonomousMovement, buildMovementRoutes, findMovementPath, reachableMovementDestinations, readMovementGoals, type MovementGoals, type PathFailure } from '../lib/pathfinding'
-import { mergeCommandPlans } from '../lib/commandPlans'
+import { mergeCommandPlans, prepareManualUnitActionPlan } from '../lib/commandPlans'
 import type { CommandPlan, CoreAction, Position, UnitAction, WorldObject } from '../lib/types'
 import { positionKey } from '../lib/visibility'
 
@@ -98,7 +98,11 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const select = (object: WorldObject | null) => { setSelectedId(object?.id ?? null); setTargetMode(null); setMoveSelecting(false); setMovementError(null) }
   const setUnitAction = (id: string, action: UnitAction | null) => { const current = planRef.current; const unit_actions = { ...current.unit_actions }; if (action) unit_actions[id] = action; else delete unit_actions[id]; commitManualPlan({ ...current, unit_actions }) }
   const setCoreAction = (action: CoreAction | null) => { const current = planRef.current; if (action) { commitManualPlan({ ...current, core_action: action }); return } const next = { ...current }; delete next.core_action; commitManualPlan(next) }
-  const unitAction = (id: string, action: UnitAction | null) => { removeMovementGoal(id); setUnitAction(id, action) }
+  const unitAction = (id: string, action: UnitAction | null) => {
+    removeMovementGoal(id)
+    if (!game.state) return
+    commitManualPlan(prepareManualUnitActionPlan(game.state, game.receipts, planRef.current, id, action))
+  }
   const coreAction = (action: CoreAction | null) => { const coreId = game.state?.objects.find((object) => object.kind === 'CORE' && object.controlled)?.id; if (coreId) removeMovementGoal(coreId); setCoreAction(action) }
   const chooseTarget = (target: WorldObject) => {
     if (!selected?.id || !selected.position || !target.id || !target.position) return

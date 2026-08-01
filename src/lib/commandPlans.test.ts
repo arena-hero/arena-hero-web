@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isReceivedNotice, mergeCommandPlans } from './commandPlans'
+import { isReceivedNotice, mergeCommandPlans, prepareManualUnitActionPlan } from './commandPlans'
 
 const agent = {
   tick: 12,
@@ -49,5 +49,32 @@ describe('command plans', () => {
         unit_actions: { attacker: { type: 'MOVE', direction: 'RIGHT' } },
       },
     })).toBe(false)
+  })
+
+  it('pauses a Core auto-route when a colocated Worker deposits', () => {
+    const workerId = '00000000-0000-4000-8000-000000000001'
+    const next = prepareManualUnitActionPlan({
+      status: 'ACTIVE',
+      resources: 5,
+      population: 1,
+      population_tier: 0,
+      upkeep_next_tick: 0,
+      champion_beacon: { position: [0, 0] },
+      objects: [
+        { kind: 'CORE', controlled: true, position: [4, 5], state: 'NORMAL' },
+        { kind: 'UNIT', id: workerId, controlled: true, position: [4, 5], unit_type: 'WORKER', cargo: 1 },
+      ],
+      events: [],
+    }, {}, {
+      tick: 12,
+      unit_actions: { [workerId]: { type: 'MOVE', direction: 'LEFT' } },
+      core_action: { type: 'START_MOVE', direction: 'RIGHT' },
+    }, workerId, { type: 'DEPOSIT' })
+
+    expect(next).toEqual({
+      tick: 12,
+      unit_actions: { [workerId]: { type: 'DEPOSIT' } },
+      core_action: { type: 'WAIT' },
+    })
   })
 })
