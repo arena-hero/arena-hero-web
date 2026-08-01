@@ -51,6 +51,28 @@ describe('resourceActivityFromEvents', () => {
     ])).toEqual([])
   })
 
+  it('returns captured Core resources, including a full-storage capture', () => {
+    expect(resourceActivityFromEvents([
+    {
+      event_id: 'capture',
+      tick: 8,
+      event_type: 'CORE_RESOURCES_CAPTURED',
+      position: [5, 6],
+      values: { amount: 3, available: 7, destroyed: 4, capacity: 10 },
+    },
+    {
+      event_id: 'full-capture',
+      tick: 8,
+      event_type: 'CORE_RESOURCES_CAPTURED',
+      position: [7, 8],
+      values: { amount: 0, available: 5, destroyed: 5, capacity: 10 },
+    },
+    ])).toEqual([
+    { eventId: 'capture', kind: 'CAPTURED', amount: 3, available: 7, destroyed: 4, capacity: 10, position: [5, 6] },
+    { eventId: 'full-capture', kind: 'CAPTURED', amount: 0, available: 5, destroyed: 5, capacity: 10, position: [7, 8] },
+    ])
+  })
+
   it('returns a full-storage notice from a failed deposit', () => {
     expect(resourceActivityFromEvents([{
       event_id: 'full',

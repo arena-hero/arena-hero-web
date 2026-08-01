@@ -1,7 +1,8 @@
 export type Position = [number, number]
 export type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 export type UnitType = 'WORKER' | 'VANGUARD' | 'RANGER'
-export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'WAIT'
+export type HarvestSource = 'RESOURCE_NODE' | 'DROPPED_CARGO'
+export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'SELF_DESTRUCT' | 'WAIT'
 export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'WAIT'
 
 export interface WorldObject {
@@ -30,7 +31,13 @@ export interface GameEvent {
   actor_id?: string
   target_id?: string
   position?: Position
-  values?: Record<string, unknown>
+  values?: Record<string, unknown> & {
+    amount?: number
+  available?: number
+  destroyed?: number
+  capacity?: number
+    source?: HarvestSource
+  }
 }
 
 export interface ChampionBeaconView {

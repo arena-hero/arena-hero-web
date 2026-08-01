@@ -63,6 +63,18 @@ describe('ResourceActivity', () => {
     expect(screen.getByText('Worker 掉落了 2 点资源')).toBeInTheDocument()
   })
 
+  it('explains captured and destroyed Core resources', () => {
+    render(<ResourceActivity events={[{
+    event_id: 'capture',
+    tick: 8,
+    event_type: 'CORE_RESOURCES_CAPTURED',
+    position: [5, 6],
+    values: { amount: 1, available: 6, destroyed: 5, capacity: 10 },
+    }]} />)
+    expect(screen.getByText('Captured 1 of 6 Core resources. 5 did not fit and was destroyed (capacity 10).')).toBeInTheDocument()
+    expect(screen.getByText('[5, 6]')).toBeInTheDocument()
+  })
+
   it('shows the Core limit when any client attempts a full deposit', () => {
     render(<ResourceActivity events={[{
       event_id: 'full',

@@ -14,6 +14,16 @@ interface ResourceFullActivityItem {
   position: Position
 }
 
+interface ResourceCapturedActivityItem {
+  eventId: string
+  kind: 'CAPTURED'
+  amount: number
+  available: number
+  destroyed: number
+  capacity: number
+  position: Position
+}
+
 type DepositFailureReason = 'WORKER_EMPTY' | 'CORE_NOT_PRESENT' | 'CORE_MOVING'
 
 interface DepositFailureActivityItem {
@@ -23,12 +33,41 @@ interface DepositFailureActivityItem {
   position: Position
 }
 
-export type ResourceActivityItem = ResourceAmountActivityItem | ResourceFullActivityItem | DepositFailureActivityItem
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem
 
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
     if (!event.position) return []
     const capacity = event.values?.capacity
+  const amount = event.values?.amount
+  const available = event.values?.available
+  const destroyed = event.values?.destroyed
+  if (
+    event.event_type === 'CORE_RESOURCES_CAPTURED'
+    && typeof amount === 'number'
+    && Number.isSafeInteger(amount)
+    && amount >= 0
+    && typeof available === 'number'
+    && Number.isSafeInteger(available)
+    && available > 0
+    && typeof destroyed === 'number'
+    && Number.isSafeInteger(destroyed)
+    && destroyed >= 0
+    && amount + destroyed === available
+    && typeof capacity === 'number'
+    && Number.isSafeInteger(capacity)
+    && capacity >= 0
+  ) {
+    return [{
+    eventId: event.event_id,
+    kind: 'CAPTURED',
+    amount,
+    available,
+    destroyed,
+    capacity,
+    position: event.position,
+    }]
+  }
     if (
       event.event_type === 'DEPOSIT_FAILED'
       && event.reason_code === 'CORE_RESOURCE_FULL'
@@ -57,7 +96,6 @@ export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivit
       }]
     }
 
-    const amount = event.values?.amount
     if (
       !Number.isSafeInteger(amount)
       || typeof amount !== 'number'

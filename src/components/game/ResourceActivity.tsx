@@ -1,4 +1,4 @@
-import { CircleAlert, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
+import { CircleAlert, Coins, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resourceActivityFromEvents } from '../../lib/resourceActivity'
@@ -26,6 +26,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
       {visibleItems.map((item) => {
         const Icon = item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
           ? CircleAlert
+      : item.kind === 'CAPTURED'
+      ? Coins
           : item.kind === 'DROPPED'
           ? PackageOpen
           : item.kind === 'DESTROYED'
@@ -33,6 +35,13 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
             : Pickaxe
         const message = item.kind === 'FULL'
           ? t('game.coreResourceFull', { capacity: item.capacity })
+      : item.kind === 'CAPTURED'
+      ? t('game.coreResourcesCaptured', {
+        amount: item.amount,
+        available: item.available,
+        destroyed: item.destroyed,
+        capacity: item.capacity,
+      })
           : item.kind === 'DEPOSIT_FAILED'
             ? t(item.reason === 'CORE_MOVING'
               ? 'game.depositCoreMoving'
@@ -50,6 +59,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
             size={15}
             className={item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
               ? 'text-amber-300'
+        : item.kind === 'CAPTURED'
+        ? 'text-emerald-300'
               : item.kind === 'DROPPED'
               ? 'text-violet-300'
               : item.kind === 'DESTROYED'
