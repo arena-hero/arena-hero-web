@@ -8,10 +8,9 @@ export interface ShotMarker { objectId: string; from: Position; to: Position; so
 
 export function rangerTargets(state: PlayerState, ranger: WorldObject): WorldObject[] {
   if (!ranger.controlled || ranger.unit_type !== 'RANGER' || !ranger.position) return []
-  const obstacles = new Set<string>(), occupied = new Set<string>()
+  const obstacles = new Set<string>()
   for (const object of state.objects) {
     if (object.kind === 'OBSTACLE') for (const position of object.positions ?? []) obstacles.add(positionKey(position))
-    if (object.position) occupied.add(positionKey(object.position))
   }
   return state.objects.filter((target) => {
     if (!target.id || target.controlled !== false || !target.position) return false
@@ -20,7 +19,7 @@ export function rangerTargets(state: PlayerState, ranger: WorldObject): WorldObj
     const stepX = Math.sign(dx), stepY = Math.sign(dy)
     for (let step = 1; step < distance; step++) {
       const key = positionKey([ranger.position![0] + stepX * step, ranger.position![1] + stepY * step])
-      if (obstacles.has(key) || occupied.has(key)) return false
+      if (obstacles.has(key)) return false
     }
     return true
   })
