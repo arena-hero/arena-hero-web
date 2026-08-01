@@ -14,8 +14,9 @@ export function rangerTargets(state: PlayerState, ranger: WorldObject): WorldObj
   }
   return state.objects.filter((target) => {
     if (!target.id || target.controlled !== false || !target.position) return false
-    const dx = target.position[0] - ranger.position![0], dy = target.position[1] - ranger.position![1], distance = Math.abs(dx) + Math.abs(dy)
-    if (distance < 1 || distance > 3 || (dx !== 0 && dy !== 0)) return false
+    const dx = target.position[0] - ranger.position![0], dy = target.position[1] - ranger.position![1]
+    const absX = Math.abs(dx), absY = Math.abs(dy), distance = Math.max(absX, absY)
+    if (distance < 1 || distance > 3 || (dx !== 0 && dy !== 0 && absX !== absY)) return false
     const stepX = Math.sign(dx), stepY = Math.sign(dy)
     for (let step = 1; step < distance; step++) {
       const key = positionKey([ranger.position![0] + stepX * step, ranger.position![1] + stepY * step])
