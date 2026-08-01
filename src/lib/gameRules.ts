@@ -1,7 +1,6 @@
 import type { PlayerState } from './types'
 
 export const MAX_ENTITIES_PER_CELL = 2
-export const RESPAWN_DELAY_TICKS = 20
 export const CORE_MAX_HP = 5
 export const CORE_MAX_SHIELD = 5
 export const CORE_BEACON_MAX_SHIELD = 10
