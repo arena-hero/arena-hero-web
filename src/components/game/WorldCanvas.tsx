@@ -4,7 +4,7 @@ import { BEACON_SPRITE_PATH, beaconSpriteRect } from '../../lib/beaconArt'
 import { resolvedShotMarkers, resolvedSweepMarkers, type ResolvedShotMarker } from '../../lib/combatAnimation'
 import type { ShotMarker, SweepMarker } from '../../lib/combatPreview'
 import type { ExploredCell } from '../../lib/exploration'
-import { CORE_MAX_HP, coreResourceCapacity } from '../../lib/gameRules'
+import { CORE_MAX_HP, coreResourceCapacity, visibleCoreShieldLimit } from '../../lib/gameRules'
 import { mapFeaturesAt, type MapFeatureView } from '../../lib/mapFeatures'
 import { collectEntityPositions, continueOrStartMotionAnimation, interpolatePosition, type EntityMotion, type EntityMotionAnimation } from '../../lib/movementAnimation'
 import type { MoveArrow } from '../../lib/movementPreview'
@@ -548,7 +548,7 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
     const cargoWorker = selected?.unit_type === 'WORKER' ? selected : displayed.find((object) => object.unit_type === 'WORKER')
     const topMeterObject = selected?.kind === 'CORE' && selected.controlled ? selected : selected?.unit_type === 'WORKER' ? selected : controlledCore ?? cargoWorker
     const topMeterPlacement = placements.find(({ object }) => object === topMeterObject) ?? { x: meterX, y: meterY }
-    const meterOffset = camera.cell * (objects.some((object) => object.kind === 'CORE') ? .43 : .36)
+    const meterOffset = camera.cell * (core ? .43 : .36)
     if (topMeterObject?.kind === 'CORE') drawCoreResources(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, state.resources, coreResourceCapacity(state.population))
     else if (topMeterObject?.unit_type === 'WORKER' && topMeterObject.cargo !== undefined) drawWorkerCargo(ctx, topMeterPlacement.x, topMeterPlacement.y - meterOffset, camera.cell, topMeterObject.cargo, Math.max(topMeterObject.cargo, beaconBuffActive ? 2 : 1))
     const corePlacement = core ? placements.find(({ object }) => object === core) : undefined
@@ -556,10 +556,15 @@ function drawWorldEntities(ctx: CanvasRenderingContext2D, size: { width: number;
     const hp = objects.reduce((sum, object) => sum + (object.hp ?? 0), 0)
     const maxHp = objects.reduce((sum, object) => sum + maximumHealth(object), 0)
     if (maxHp > 0) {
-      const healthY = meterY + meterOffset
       const color = objects.every((object) => object.controlled === true) ? PRIMARY_BLUE : objects.every((object) => object.controlled === false) ? HOSTILE_CORAL : '#d4d4d8'
       if (objects.length > 1) drawStackBadge(ctx, meterX + camera.cell * .36, meterY, camera.cell, objects.length, color)
-      drawHealthBar(ctx, meterX, healthY, camera.cell, hp, maxHp, color)
+      if (core?.shield !== undefined) {
+        const shieldX = corePlacement?.x ?? meterX
+        drawCoreShieldBar(ctx, shieldX, meterY + camera.cell * .34, camera.cell, core.shield, visibleCoreShieldLimit(state, core.id))
+        drawHealthBar(ctx, meterX, meterY + camera.cell * .48, camera.cell, hp, maxHp, color, `${hp} HP`)
+      } else {
+        drawHealthBar(ctx, meterX, meterY + meterOffset, camera.cell, hp, maxHp, color)
+      }
     }
   }
   if (beaconCarried && !carriedBeaconDrawn) drawChampionBeacon(ctx, beaconPoint, camera.cell, state.champion_beacon.status, false, beaconSprite)
@@ -984,8 +989,12 @@ function drawStackBadge(ctx: CanvasRenderingContext2D, x: number, y: number, cel
   ctx.fillStyle = '#fafafa'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(label, x, y + .25); ctx.restore()
 }
 
-function drawHealthBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, hp: number, maxHp: number, color: string) {
-  drawMeterBar(ctx, x, y, cell, hp, maxHp, color, '#d4d4d8')
+function drawCoreShieldBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, shield: number, maxShield: number) {
+  drawMeterBar(ctx, x, y, cell, shield, maxShield, AGENT_VIOLET, '#c7c8e7', `${shield} SHD`)
+}
+
+function drawHealthBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, hp: number, maxHp: number, color: string, label?: string) {
+  drawMeterBar(ctx, x, y, cell, hp, maxHp, color, '#d4d4d8', label)
 }
 
 function drawMeterBar(ctx: CanvasRenderingContext2D, x: number, y: number, cell: number, value: number, maximum: number, color: string, labelColor: string, displayLabel = `${value}/${maximum}`) {

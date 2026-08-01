@@ -19,3 +19,8 @@ export function playerOwnsChampionBeacon(state: PlayerState) {
 export function coreShieldLimit(state: PlayerState) {
   return playerOwnsChampionBeacon(state) ? CORE_BEACON_MAX_SHIELD : CORE_MAX_SHIELD
 }
+
+export function visibleCoreShieldLimit(state: PlayerState, coreId?: string) {
+  const carrierId = state.champion_beacon.status === 'CARRIED' ? state.champion_beacon.carrier_id : undefined
+  return coreId && carrierId === coreId ? CORE_BEACON_MAX_SHIELD : CORE_MAX_SHIELD
+}
