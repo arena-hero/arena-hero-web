@@ -1,4 +1,4 @@
-import { CircleAlert, Coins, HeartPulse, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
+import { CircleAlert, Coins, HeartCrack, HeartPulse, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resourceActivityFromEvents } from '../../lib/resourceActivity'
@@ -26,6 +26,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
       {visibleItems.map((item) => {
         const Icon = item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED' || item.kind === 'HEAL_FAILED'
           ? CircleAlert
+          : item.kind === 'UPKEEP_DAMAGE'
+            ? HeartCrack
           : item.kind === 'HEALED'
             ? HeartPulse
       : item.kind === 'CAPTURED'
@@ -37,6 +39,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
             : Pickaxe
         const message = item.kind === 'FULL'
           ? t('game.coreResourceFull', { capacity: item.capacity })
+          : item.kind === 'UPKEEP_DAMAGE'
+            ? t(item.hp === 0 ? 'game.upkeepUnitDestroyed' : 'game.upkeepUnitDamaged', { damage: item.damage, hp: item.hp })
           : item.kind === 'HEALED'
             ? t('game.healedHP', { amount: item.amount, hp: item.hp })
             : item.kind === 'HEAL_FAILED'
@@ -71,6 +75,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
             size={15}
             className={item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED' || item.kind === 'HEAL_FAILED'
               ? 'text-amber-300'
+              : item.kind === 'UPKEEP_DAMAGE'
+                ? 'text-red-300'
               : item.kind === 'HEALED'
                 ? 'text-emerald-300'
         : item.kind === 'CAPTURED'

@@ -7,6 +7,16 @@ import { ResourceActivity } from './ResourceActivity'
 describe('ResourceActivity', () => {
   afterEach(() => void i18n.changeLanguage('en'))
 
+  it('explains upkeep damage and destruction', () => {
+    render(<ResourceActivity events={[
+      { event_id: 'damaged', tick: 8, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [4, 5], values: { damage: 1, hp: 3 } },
+      { event_id: 'destroyed', tick: 8, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [5, 5], values: { damage: 2, hp: 0 } },
+    ]} />)
+
+    expect(screen.getByText('Unpaid upkeep dealt 1 damage to an excess Unit (3 HP left).')).toBeInTheDocument()
+    expect(screen.getByText('Unpaid upkeep destroyed an excess Unit after dealing 2 damage.')).toBeInTheDocument()
+  })
+
   it('shows cargo drops, recovery, and destroyed overflow with positions', () => {
     render(<ResourceActivity events={[
       {
