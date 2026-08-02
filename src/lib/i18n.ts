@@ -53,7 +53,7 @@ const resources = {
       generic: 'Something went wrong. Please try again.',
     },
     game: {
-      resources: 'Resources', resourceCapacity: 'Resources / capacity', population: 'Population', upkeep: 'Next upkeep', tier: 'Population tier', status: 'Status',
+      resources: 'Resources', resourceCapacity: 'Resources / capacity', population: 'Population', upkeep: 'Next upkeep', tier: 'Population tier', status: 'Status', upkeepShortfall: 'Next Tick upkeep is short by {{deficit}}', upkeepShortfallConsequence: 'Unpaid upkeep damages Units outside the protected 19, farthest from your Core first.',
       syncing: 'SYNCING TICK', open: 'ORDERS OPEN', connecting: 'CONNECTING', settling: 'SETTLING', offline: 'RECONNECTING', demo: 'DEMO SIGNAL',
       objects: 'Your assets', noSelection: 'Select a controlled object on the map', orders: 'Manual orders', submit: 'Submit orders', submitted: 'Plan received', autoSendReady: 'Each completed action is sent immediately', sendingAction: 'Sending action…', actionReceived: 'Action received', waitingNextTick: 'Waiting for the next Tick',
       center: 'Center on Core', zoomIn: 'Zoom in', zoomOut: 'Zoom out', events: 'Private events', noEvents: 'No events this tick',
@@ -155,7 +155,7 @@ const resources = {
       generic: '操作失败，请稍后重试。',
     },
     game: {
-      resources: '资源', resourceCapacity: '资源 / 容量', population: '人口', upkeep: '下 Tick 维护费', tier: '人口等级', status: '状态',
+      resources: '资源', resourceCapacity: '资源 / 容量', population: '人口', upkeep: '下 Tick 维护费', tier: '人口等级', status: '状态', upkeepShortfall: '下 Tick 维护费还差 {{deficit}} 点资源', upkeepShortfallConsequence: '欠费会伤害保护名额之外的单位，离 Core 最远的优先。',
       syncing: '正在同步 TICK', open: '指令已开放', connecting: '正在连接', settling: '正在结算', offline: '正在重连', demo: '演示信号',
       objects: '己方单位', noSelection: '在地图上选择一个己方对象', orders: '手动指令', submit: '提交指令', submitted: '计划已接收', autoSendReady: '每个完成的操作都会立即发送', sendingAction: '正在发送操作……', actionReceived: '操作已接收', waitingNextTick: '等待下一个 Tick',
       center: '定位 Core', zoomIn: '放大', zoomOut: '缩小', events: '私人事件', noEvents: '本 Tick 没有事件',

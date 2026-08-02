@@ -9,6 +9,7 @@ import { ResourceActivity } from '../components/game/ResourceActivity'
 import { RespawnOverlay } from '../components/game/RespawnOverlay'
 import { WorldCanvas } from '../components/game/WorldCanvas'
 import { UnitActionDialog, type MapAnchor } from '../components/game/UnitActionDialog'
+import { UpkeepWarning } from '../components/game/UpkeepWarning'
 import { useGameStream } from '../hooks/useGameStream'
 import { useAuth } from '../context/AuthContext'
 import { plannedShotMarkers, plannedSweepMarkers, rangerTargets } from '../lib/combatPreview'
@@ -36,6 +37,7 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const [movementGoals, setMovementGoals] = useState<MovementGoals>(() => readMovementGoals(localStorage.getItem(movementStorageKey)))
   const planRef = useRef(plan); const tickRef = useRef(game.tick); const submitQueueRef = useRef<Promise<void>>(Promise.resolve()); const movementGoalsRef = useRef(movementGoals); const autoMovementTickRef = useRef<number | null>(null)
   const respawning = game.state?.status === 'RESPAWNING'
+  const upkeepShortfall = Boolean(game.state && game.state.upkeep_next_tick > game.state.resources)
   const replaceMovementGoals = useCallback((next: MovementGoals) => { movementGoalsRef.current = next; setMovementGoals(next) }, [])
   const removeMovementGoal = useCallback((objectId: string) => {
     if (!movementGoalsRef.current[objectId]) return
@@ -129,7 +131,8 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     <AssetList state={game.state} objects={game.state.objects} selectedId={selectedId} onSelect={select} />
     <section className="relative min-h-0 overflow-hidden">
       {!respawning && <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />}
-      {!respawning && game.tick && <PendingCommands tick={game.tick} state={game.state} receipts={game.receipts} />}
+      {!respawning && <UpkeepWarning state={game.state} className="pointer-events-none absolute left-3 right-3 top-16 z-20 lg:hidden" />}
+      {!respawning && game.tick && <PendingCommands tick={game.tick} state={game.state} receipts={game.receipts} belowUpkeepWarning={upkeepShortfall} />}
       <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerPosition={centerPosition} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onMoveDestination={chooseMoveDestination} onCenterBeacon={() => { setCenterPosition(game.state!.champion_beacon.position); setCenterRequest((value) => value + 1) }} onAnchorChange={setAnchor} />
       {!respawning && <ResourceActivity events={game.state.events} />}
       {respawning && <RespawnOverlay destroyedBy={coreDestroyer} />}

@@ -15,6 +15,7 @@ interface Props {
   tick: number
   state: PlayerState
   receipts: CommandReceipts
+  belowUpkeepWarning?: boolean
 }
 
 interface CommandRow {
@@ -24,7 +25,7 @@ interface CommandRow {
   overridesAgent: boolean
 }
 
-export function PendingCommands({ tick, state, receipts }: Props) {
+export function PendingCommands({ tick, state, receipts, belowUpkeepWarning = false }: Props) {
   const { t, i18n } = useTranslation()
   const [expanded, setExpanded] = useState(true)
   const sections = useMemo(() => (['AGENT', 'MANUAL'] as CommandSource[])
@@ -43,7 +44,7 @@ export function PendingCommands({ tick, state, receipts }: Props) {
   const latestUpdate = sections.reduce((latest, section) =>
     section.receivedAt > latest ? section.receivedAt : latest, '')
 
-  return <section aria-live="polite" className="panel pointer-events-auto absolute right-3 top-16 z-20 w-[min(19rem,calc(100%-1.5rem))] overflow-hidden rounded-gold-lg shadow-[0_18px_48px_rgba(0,0,0,.38)]">
+  return <section aria-live="polite" className={`panel pointer-events-auto absolute right-3 z-20 w-[min(19rem,calc(100%-1.5rem))] overflow-hidden rounded-gold-lg shadow-[0_18px_48px_rgba(0,0,0,.38)] ${belowUpkeepWarning ? 'top-40 lg:top-16' : 'top-16'}`}>
     <button
       type="button"
       aria-expanded={expanded}
