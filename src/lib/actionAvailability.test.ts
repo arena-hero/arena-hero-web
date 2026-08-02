@@ -32,18 +32,32 @@ describe('getActionAvailability', () => {
     expect(getActionAvailability(state([vanguard, adjacentEnemy]), vanguard).actions.SWEEP).toBe(true)
   })
 
-  it('uses resources and shield state for core actions', () => {
+  it('allows post-combat Core actions to be planned before damage or captured resources', () => {
     const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
     const availability = getActionAvailability(state([core], 4), core)
-    expect(availability.actions.REPAIR_SHIELD).toBe(false)
-    expect(availability.spawns).toEqual({ WORKER: false, VANGUARD: false, RANGER: false })
+    expect(availability.actions).toMatchObject({ HEAL: true, REPAIR_SHIELD: true })
+    expect(availability.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
     const funded = getActionAvailability(state([{ ...core, shield: 4 }], 12), { ...core, shield: 4 })
     expect(funded.actions.REPAIR_SHIELD).toBe(true)
     expect(funded.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
 
     const beaconState = { ...state([{ ...core, shield: 9 }], 1), champion_beacon: { position: [0, 0] as [number, number], status: 'CARRIED' as const, carrier_id: 'core' } }
     expect(getActionAvailability(beaconState, { ...core, shield: 9 }).actions.REPAIR_SHIELD).toBe(true)
-    expect(getActionAvailability(beaconState, { ...core, shield: 10 }).actions.REPAIR_SHIELD).toBe(false)
+    expect(getActionAvailability(beaconState, { ...core, shield: 10 }).actions.REPAIR_SHIELD).toBe(true)
+  })
+
+  it('only allows Unit healing at its own stationary Core', () => {
+    const worker: WorldObject = { kind: 'UNIT', id: 'worker', controlled: true, position: [0, 0], hp: 2, unit_type: 'WORKER', cargo: 0 }
+    const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
+    expect(getActionAvailability(state([worker, core]), worker).actions.HEAL).toBe(true)
+
+    const away = getActionAvailability(state([worker, { ...core, position: [1, 0] }]), worker)
+    expect(away.actions.HEAL).toBe(false)
+    expect(away.unavailableReasons?.HEAL).toEqual({ code: 'NOT_AT_OWN_CORE' })
+
+    const moving = getActionAvailability(state([worker, { ...core, state: 'MOVING' }]), worker)
+    expect(moving.actions.HEAL).toBe(false)
+    expect(moving.unavailableReasons?.HEAL).toEqual({ code: 'CORE_MOVING' })
   })
 
   it('disables production when the core and one unit fill the cell', () => {

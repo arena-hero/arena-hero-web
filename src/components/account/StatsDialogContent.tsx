@@ -27,6 +27,8 @@ export function StatsDialogContent() {
     ['beaconBonusHarvested', stats.beacon_bonus_resources_harvested ?? 0, PLAYER_STAT_ICON_PATHS.beaconBonusHarvested],
     ['spawned', stats.units_spawned, PLAYER_STAT_ICON_PATHS.spawned],
     ['lost', stats.units_lost, PLAYER_STAT_ICON_PATHS.lost],
+    ['unitHPRecovered', stats.unit_hp_recovered ?? 0, PLAYER_STAT_ICON_PATHS.unitHPRecovered],
+    ['coreHPRecovered', stats.core_hp_recovered ?? 0, PLAYER_STAT_ICON_PATHS.coreHPRecovered],
     ['survival', stats.core_survival_ticks, PLAYER_STAT_ICON_PATHS.survival],
     ['respawns', stats.respawn_count, PLAYER_STAT_ICON_PATHS.respawns],
   ] as const : []

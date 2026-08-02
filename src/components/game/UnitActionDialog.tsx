@@ -31,13 +31,13 @@ export function UnitActionDialog(props: Props) {
   const currentAction = props.selected.kind === 'CORE' ? props.plan.core_action : props.selected.id ? props.plan.unit_actions[props.selected.id] : undefined
   const actionTypes = useMemo(() => {
     let actions: AvailableAction[]
-    if (props.selected.kind === 'CORE') actions = props.selected.state === 'MOVING' ? ['CANCEL_MOVE'] : ['REPAIR_SHIELD', 'START_MOVE']
+    if (props.selected.kind === 'CORE') actions = props.selected.state === 'MOVING' ? ['CANCEL_MOVE'] : ['HEAL', 'REPAIR_SHIELD', 'START_MOVE']
     else if (props.selected.unit_type === 'WORKER') actions = ['MOVE', 'HARVEST', 'DEPOSIT']
     else if (props.selected.unit_type === 'VANGUARD') actions = ['MOVE', 'SWEEP']
     else actions = ['MOVE', 'SHOOT']
     if (props.availability.actions.DROP_BEACON) actions.push('DROP_BEACON')
     else if (props.availability.actions.PICKUP_BEACON) actions.push('PICKUP_BEACON')
-    if (props.selected.kind === 'UNIT') actions.push('SELF_DESTRUCT')
+    if (props.selected.kind === 'UNIT') actions.push('HEAL', 'SELF_DESTRUCT')
     actions.push('WAIT')
     return actions
   }, [props.availability.actions.DROP_BEACON, props.availability.actions.PICKUP_BEACON, props.selected])
@@ -76,6 +76,8 @@ export function UnitActionDialog(props: Props) {
       return <button key={type} onClick={() => choose(type)} disabled={!available && !explainsUnavailable} aria-disabled={!available || undefined} className={type === 'SELF_DESTRUCT' ? 'focus-ring min-h-11 rounded-gold border border-coral-hostile/30 bg-coral-hostile/[.08] px-2 text-xs text-coral-hostile hover:bg-coral-hostile/[.14] disabled:cursor-not-allowed disabled:opacity-40' : `secondary-button min-h-11 px-2 text-xs disabled:cursor-not-allowed disabled:border-white/[.04] disabled:bg-white/[.015] disabled:text-zinc-700 disabled:opacity-60 ${unavailableClass}`}>{t(`game.actions.${type}`)}</button>
     })}</div>
     {blockedReason?.code === 'CORE_RESOURCE_FULL' && <p role="alert" className="mt-3 rounded-gold border border-amber-300/20 bg-amber-300/[.06] px-3 py-2 text-xs leading-5 text-amber-100">{t('game.coreResourceFull', { capacity: blockedReason.capacity })}</p>}
+    {blockedReason?.code === 'NOT_AT_OWN_CORE' && <p role="alert" className="mt-3 rounded-gold border border-amber-300/20 bg-amber-300/[.06] px-3 py-2 text-xs leading-5 text-amber-100">{t('game.healRequiresOwnCore')}</p>}
+    {blockedReason?.code === 'CORE_MOVING' && <p role="alert" className="mt-3 rounded-gold border border-amber-300/20 bg-amber-300/[.06] px-3 py-2 text-xs leading-5 text-amber-100">{t('game.healCoreMoving')}</p>}
     {props.selected.kind === 'CORE' && <section aria-labelledby="produce-unit-title" className="mt-3 border-t border-white/[.07] pt-3">
       <div className="mb-2 flex items-center justify-between gap-3 px-1">
         <div id="produce-unit-title" className="flex items-center gap-2 text-xs font-medium text-zinc-300"><PackagePlus size={14} className="text-green-resource" />{t('game.produceUnit')}</div>

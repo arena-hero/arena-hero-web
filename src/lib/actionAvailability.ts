@@ -1,6 +1,6 @@
 import type { CommandPlan, CoreActionType, PlayerState, UnitActionType, UnitType, WorldObject } from './types'
 import { rangerTargets } from './combatPreview'
-import { coreResourceCapacity, coreShieldLimit, MAX_ENTITIES_PER_CELL } from './gameRules'
+import { coreResourceCapacity, MAX_ENTITIES_PER_CELL } from './gameRules'
 import { moveTargets, projectedEntityCount } from './movementPreview'
 
 export type AvailableAction = UnitActionType | CoreActionType
@@ -11,10 +11,10 @@ export interface ActionAvailability {
   unavailableReasons?: Partial<Record<AvailableAction, UnavailableActionReason>>
 }
 
-export interface UnavailableActionReason {
-  code: 'CORE_RESOURCE_FULL'
-  capacity: number
-}
+export type UnavailableActionReason =
+  | { code: 'CORE_RESOURCE_FULL'; capacity: number }
+  | { code: 'NOT_AT_OWN_CORE' }
+  | { code: 'CORE_MOVING' }
 
 export const UNIT_COST: Record<UnitType, number> = { WORKER: 5, VANGUARD: 10, RANGER: 12 }
 
@@ -32,7 +32,8 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
     const hasSpawnCapacity = projectedEntityCount(state, selected.position, plan) < MAX_ENTITIES_PER_CELL
     return {
       actions: {
-        REPAIR_SHIELD: normal && state.resources >= 1 && (selected.shield ?? 0) < coreShieldLimit(state),
+        HEAL: normal,
+        REPAIR_SHIELD: normal,
         START_MOVE: normal && moveTargets(state, selected, plan).length > 0,
         CANCEL_MOVE: !normal,
         PICKUP_BEACON: normal && beaconActions.PICKUP_BEACON,
@@ -40,14 +41,20 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
         WAIT: true,
       },
       spawns: {
-        WORKER: normal && hasSpawnCapacity && state.resources >= UNIT_COST.WORKER,
-        VANGUARD: normal && hasSpawnCapacity && state.resources >= UNIT_COST.VANGUARD,
-        RANGER: normal && hasSpawnCapacity && state.resources >= UNIT_COST.RANGER,
+        WORKER: normal && hasSpawnCapacity,
+        VANGUARD: normal && hasSpawnCapacity,
+        RANGER: normal && hasSpawnCapacity,
       },
     }
   }
 
   const canMove = moveTargets(state, selected, plan).length > 0
+  const ownCore = state.objects.find((object) => object.kind === 'CORE' && object.controlled === true && object.position && samePosition(object.position, selected.position!))
+  const canHeal = Boolean(ownCore && ownCore.state !== 'MOVING')
+  const healReason: UnavailableActionReason | undefined = canHeal
+    ? undefined
+    : ownCore?.state === 'MOVING' ? { code: 'CORE_MOVING' } : { code: 'NOT_AT_OWN_CORE' }
+  const healingActions = { HEAL: canHeal }
   if (selected.unit_type === 'WORKER') {
     const resource = state.objects.find((object) => object.kind === 'RESOURCE' && object.positions?.some((position) => samePosition(position, selected.position!)))
     const core = state.objects.find((object) => object.kind === 'CORE' && object.controlled === true && object.state !== 'MOVING' && object.position && samePosition(object.position, selected.position!))
@@ -55,16 +62,19 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
     const coreHasResourceSpace = state.resources < resourceCapacity
     const canReachCoreStorage = (selected.cargo ?? 0) > 0 && Boolean(core)
     return {
-      actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: canReachCoreStorage && coreHasResourceSpace, ...beaconActions, ...unitActions, WAIT: true },
+      actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: canReachCoreStorage && coreHasResourceSpace, ...healingActions, ...beaconActions, ...unitActions, WAIT: true },
       spawns: unavailable.spawns,
-      unavailableReasons: canReachCoreStorage && !coreHasResourceSpace ? { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: resourceCapacity } } : undefined,
+      unavailableReasons: {
+        ...(!canHeal && healReason ? { HEAL: healReason } : {}),
+        ...(canReachCoreStorage && !coreHasResourceSpace ? { DEPOSIT: { code: 'CORE_RESOURCE_FULL' as const, capacity: resourceCapacity } } : {}),
+      },
     }
   }
   if (selected.unit_type === 'VANGUARD') {
     const canSweep = state.objects.some((object) => object.controlled === false && object.position && Math.abs(object.position[0] - selected.position![0]) + Math.abs(object.position[1] - selected.position![1]) === 1)
-    return { actions: { MOVE: canMove, SWEEP: canSweep, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns }
+    return { actions: { MOVE: canMove, SWEEP: canSweep, ...healingActions, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns, unavailableReasons: !canHeal && healReason ? { HEAL: healReason } : undefined }
   }
-  if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: rangerTargets(state, selected).length > 0, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns }
+  if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: rangerTargets(state, selected).length > 0, ...healingActions, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns, unavailableReasons: !canHeal && healReason ? { HEAL: healReason } : undefined }
   return unavailable
 }
 

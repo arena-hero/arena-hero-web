@@ -33,41 +33,79 @@ interface DepositFailureActivityItem {
   position: Position
 }
 
-export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem
+type HealFailureReason = 'HP_FULL' | 'NOT_AT_OWN_CORE' | 'CORE_MOVING' | 'INSUFFICIENT_RESOURCES'
+
+interface HealActivityItem {
+  eventId: string
+  kind: 'HEALED'
+  amount: number
+  hp: number
+  position: Position
+}
+
+interface HealFailureActivityItem {
+  eventId: string
+  kind: 'HEAL_FAILED'
+  reason: HealFailureReason
+  position: Position
+}
+
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem | HealActivityItem | HealFailureActivityItem
 
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
     if (!event.position) return []
     const capacity = event.values?.capacity
-  const amount = event.values?.amount
-  const available = event.values?.available
-  const destroyed = event.values?.destroyed
-  if (
-    event.event_type === 'CORE_RESOURCES_CAPTURED'
-    && typeof amount === 'number'
-    && Number.isSafeInteger(amount)
-    && amount >= 0
-    && typeof available === 'number'
-    && Number.isSafeInteger(available)
-    && available > 0
-    && typeof destroyed === 'number'
-    && Number.isSafeInteger(destroyed)
-    && destroyed >= 0
-    && amount + destroyed === available
-    && typeof capacity === 'number'
-    && Number.isSafeInteger(capacity)
-    && capacity >= 0
-  ) {
-    return [{
-    eventId: event.event_id,
-    kind: 'CAPTURED',
-    amount,
-    available,
-    destroyed,
-    capacity,
-    position: event.position,
-    }]
-  }
+    const amount = event.values?.amount
+    const hp = event.values?.hp
+    const available = event.values?.available
+    const destroyed = event.values?.destroyed
+    if (
+      event.event_type === 'CORE_RESOURCES_CAPTURED'
+      && typeof amount === 'number'
+      && Number.isSafeInteger(amount)
+      && amount >= 0
+      && typeof available === 'number'
+      && Number.isSafeInteger(available)
+      && available > 0
+      && typeof destroyed === 'number'
+      && Number.isSafeInteger(destroyed)
+      && destroyed >= 0
+      && amount + destroyed === available
+      && typeof capacity === 'number'
+      && Number.isSafeInteger(capacity)
+      && capacity >= 0
+    ) {
+      return [{
+        eventId: event.event_id,
+        kind: 'CAPTURED',
+        amount,
+        available,
+        destroyed,
+        capacity,
+        position: event.position,
+      }]
+    }
+    if (
+      (event.event_type === 'UNIT_HEAL_SUCCEEDED' || event.event_type === 'CORE_HEAL_SUCCEEDED')
+      && typeof amount === 'number'
+      && Number.isSafeInteger(amount)
+      && amount > 0
+      && typeof hp === 'number'
+      && Number.isSafeInteger(hp)
+      && hp > 0
+    ) {
+      return [{ eventId: event.event_id, kind: 'HEALED', amount, hp, position: event.position }]
+    }
+    if (
+      (event.event_type === 'UNIT_HEAL_FAILED' || event.event_type === 'CORE_HEAL_FAILED')
+      && (event.reason_code === 'HP_FULL'
+        || event.reason_code === 'NOT_AT_OWN_CORE'
+        || event.reason_code === 'CORE_MOVING'
+        || event.reason_code === 'INSUFFICIENT_RESOURCES')
+    ) {
+      return [{ eventId: event.event_id, kind: 'HEAL_FAILED', reason: event.reason_code, position: event.position }]
+    }
     if (
       event.event_type === 'DEPOSIT_FAILED'
       && event.reason_code === 'CORE_RESOURCE_FULL'

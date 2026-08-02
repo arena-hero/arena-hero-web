@@ -10,7 +10,7 @@ describe('stat art', () => {
     })
   })
 
-  it('uses dedicated icons for every player statistic', () => {
+  it('maps every player statistic to an icon', () => {
     expect(PLAYER_STAT_ICON_PATHS).toEqual({
       damageDealt: '/assets/ui/stats/damage-dealt.png',
       damageReceived: '/assets/ui/stats/damage-received.png',
@@ -23,6 +23,8 @@ describe('stat art', () => {
       beaconBonusHarvested: '/assets/ui/stats/beacon-bonus.png',
       spawned: '/assets/ui/stats/spawned.png',
       lost: '/assets/ui/stats/lost.png',
+      unitHPRecovered: '/assets/ui/stats/damage-received.png',
+      coreHPRecovered: '/assets/ui/stats/survival.png',
       survival: '/assets/ui/stats/survival.png',
       respawns: '/assets/ui/stats/respawns.png',
     })

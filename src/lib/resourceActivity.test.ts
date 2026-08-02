@@ -2,6 +2,16 @@ import { describe, expect, it } from 'vitest'
 import { resourceActivityFromEvents } from './resourceActivity'
 
 describe('resourceActivityFromEvents', () => {
+  it('maps healing success and dynamic failures', () => {
+    expect(resourceActivityFromEvents([
+      { event_id: 'healed', tick: 9, event_type: 'UNIT_HEAL_SUCCEEDED', position: [0, 0], values: { amount: 2, hp: 4, cost: 2 } },
+      { event_id: 'failed', tick: 9, event_type: 'CORE_HEAL_FAILED', reason_code: 'INSUFFICIENT_RESOURCES', position: [0, 0] },
+    ])).toEqual([
+      { eventId: 'healed', kind: 'HEALED', amount: 2, hp: 4, position: [0, 0] },
+      { eventId: 'failed', kind: 'HEAL_FAILED', reason: 'INSUFFICIENT_RESOURCES', position: [0, 0] },
+    ])
+  })
+
   it('returns cargo drops, recovery, and destroyed Core overflow', () => {
     expect(resourceActivityFromEvents([
       {

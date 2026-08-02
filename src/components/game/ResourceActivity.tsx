@@ -1,4 +1,4 @@
-import { CircleAlert, Coins, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
+import { CircleAlert, Coins, HeartPulse, PackageOpen, Pickaxe, Trash2 } from 'lucide-react'
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { resourceActivityFromEvents } from '../../lib/resourceActivity'
@@ -24,8 +24,10 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
     </h2>
     <ul className="divide-y divide-white/[.055]">
       {visibleItems.map((item) => {
-        const Icon = item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
+        const Icon = item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED' || item.kind === 'HEAL_FAILED'
           ? CircleAlert
+          : item.kind === 'HEALED'
+            ? HeartPulse
       : item.kind === 'CAPTURED'
       ? Coins
           : item.kind === 'DROPPED'
@@ -35,6 +37,16 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
             : Pickaxe
         const message = item.kind === 'FULL'
           ? t('game.coreResourceFull', { capacity: item.capacity })
+          : item.kind === 'HEALED'
+            ? t('game.healedHP', { amount: item.amount, hp: item.hp })
+            : item.kind === 'HEAL_FAILED'
+              ? t(item.reason === 'HP_FULL'
+                ? 'game.healFailedHPFull'
+                : item.reason === 'NOT_AT_OWN_CORE'
+                  ? 'game.healFailedNotAtCore'
+                  : item.reason === 'CORE_MOVING'
+                    ? 'game.healFailedCoreMoving'
+                    : 'game.healFailedResources')
       : item.kind === 'CAPTURED'
       ? t('game.coreResourcesCaptured', {
         amount: item.amount,
@@ -57,8 +69,10 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
           <Icon
             aria-hidden="true"
             size={15}
-            className={item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED'
+            className={item.kind === 'FULL' || item.kind === 'DEPOSIT_FAILED' || item.kind === 'HEAL_FAILED'
               ? 'text-amber-300'
+              : item.kind === 'HEALED'
+                ? 'text-emerald-300'
         : item.kind === 'CAPTURED'
         ? 'text-emerald-300'
               : item.kind === 'DROPPED'

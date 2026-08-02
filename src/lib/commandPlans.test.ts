@@ -58,6 +58,16 @@ describe('command plans', () => {
         },
       },
     })).toBe(true)
+    expect(isReceivedNotice({
+      ...agent,
+      plan: {
+        ...agent.plan,
+        unit_actions: {
+          '00000000-0000-4000-8000-000000000003': { type: 'HEAL' },
+        },
+        core_action: { type: 'HEAL' },
+      },
+    })).toBe(true)
   })
 
   it('pauses a Core auto-route when a colocated Worker deposits', () => {

@@ -2,8 +2,8 @@ export type Position = [number, number]
 export type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 export type UnitType = 'WORKER' | 'VANGUARD' | 'RANGER'
 export type HarvestSource = 'RESOURCE_NODE' | 'DROPPED_CARGO'
-export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'SELF_DESTRUCT' | 'WAIT'
-export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'WAIT'
+export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'SELF_DESTRUCT' | 'HEAL' | 'WAIT'
+export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'HEAL' | 'WAIT'
 
 export interface WorldObject {
   kind: 'OBSTACLE' | 'RESOURCE' | 'CORE' | 'UNIT'
@@ -122,6 +122,8 @@ export interface PlayerStats {
   beacon_bonus_resources_harvested: number
   units_spawned: number
   units_lost: number
+  unit_hp_recovered: number
+  core_hp_recovered: number
   core_survival_ticks: number
   respawn_count: number
 }

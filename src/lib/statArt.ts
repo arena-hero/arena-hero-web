@@ -16,6 +16,8 @@ export const PLAYER_STAT_ICON_PATHS = {
   beaconBonusHarvested: '/assets/ui/stats/beacon-bonus.png',
   spawned: '/assets/ui/stats/spawned.png',
   lost: '/assets/ui/stats/lost.png',
+  unitHPRecovered: '/assets/ui/stats/damage-received.png',
+  coreHPRecovered: '/assets/ui/stats/survival.png',
   survival: '/assets/ui/stats/survival.png',
   respawns: '/assets/ui/stats/respawns.png',
 } as const

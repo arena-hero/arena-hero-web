@@ -35,6 +35,25 @@ describe('UnitActionDialog', () => {
     expect(onClose).toHaveBeenCalledOnce()
   })
 
+  it('submits Unit and Core healing as immediate complete actions', async () => {
+    const user = userEvent.setup(); const onUnitAction = vi.fn(); const onCoreAction = vi.fn(); const onClose = vi.fn()
+    const view = render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { HEAL: true, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={onCoreAction} />)
+    await user.click(screen.getByRole('button', { name: 'Heal HP' }))
+    expect(onUnitAction).toHaveBeenCalledWith('worker', { type: 'HEAL' })
+
+    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [0, 0] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }
+    view.rerender(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={core} plan={plan} phase="open" resources={0} availability={{ actions: { HEAL: true, REPAIR_SHIELD: true, START_MOVE: false, WAIT: true }, spawns: { WORKER: true, VANGUARD: true, RANGER: true } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={onCoreAction} />)
+    await user.click(screen.getByRole('button', { name: 'Heal HP' }))
+    expect(onCoreAction).toHaveBeenCalledWith({ type: 'HEAL' })
+  })
+
+  it('explains why Unit healing is currently unavailable', async () => {
+    const user = userEvent.setup()
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={3} availability={{ actions: { HEAL: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false }, unavailableReasons: { HEAL: { code: 'NOT_AT_OWN_CORE' } } }} onClose={() => undefined} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={() => undefined} />)
+    await user.click(screen.getByRole('button', { name: 'Heal HP' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('A Unit can only heal while sharing a cell with its own stationary Core.')
+  })
+
   it('closes after choosing a complete immediate action', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
     render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: true, DEPOSIT: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
