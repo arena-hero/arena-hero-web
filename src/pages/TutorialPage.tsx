@@ -97,6 +97,11 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
     if (targetMode === 'SHOOT') return new Set([TUTORIAL_IDS.enemyRanger])
     return new Set<string>()
   }, [targetMode])
+  const attackPositions = useMemo((): Position[] => {
+    if (targetMode === 'SWEEP') return [TUTORIAL_POSITIONS.enemyVanguard]
+    if (targetMode === 'SHOOT') return [TUTORIAL_POSITIONS.enemyRanger]
+    return []
+  }, [targetMode])
 
   const actionAvailability = useMemo(() => {
     if (!selected) return null
@@ -105,8 +110,9 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
 
   const routeDestinations = useMemo(() => {
     const planned = routes.map((route) => ({ objectId: route.objectId, position: route.destination, blocked: route.blocked }))
+    const attacks = selected?.id ? attackPositions.map((position) => ({ objectId: selected.id!, position, blocked: false, selectable: true, immediate: true, hostile: true })) : []
     const expected = expectedDestination[step]
-    if (!moveSelecting || !expected || !selected?.id) return planned
+    if (!moveSelecting || !expected || !selected?.id) return [...planned, ...attacks]
     return [...planned.filter((destination) => destination.objectId !== selected.id), {
       objectId: selected.id,
       position: expected,
@@ -114,7 +120,7 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
       selectable: true,
       immediate: Math.abs(expected[0] - selected.position![0]) + Math.abs(expected[1] - selected.position![1]) === 1,
     }]
-  }, [moveSelecting, routes, selected, step])
+  }, [attackPositions, moveSelecting, routes, selected, step])
 
   const highlightPositions = useMemo((): Position[] => {
     if (moveSelecting && expectedDestination[step]) return [expectedDestination[step]!]
@@ -263,6 +269,10 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
       resolveAction(11, { tick, unit_actions: { [selected.id]: { type: 'SHOOT', target_id: target.id, expected_cell: target.position } } })
     }
   }, [busy, resolveAction, selected, step, targetMode, tick])
+  const chooseAttackPosition = useCallback((position: Position) => {
+    const target = state.objects.find((object) => object.controlled === false && object.position?.[0] === position[0] && object.position?.[1] === position[1])
+    if (target) chooseTarget(target)
+  }, [chooseTarget, state.objects])
 
   const continueTutorial = () => {
     if (step === 0) changeStep(1, state)
@@ -284,6 +294,7 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
         selectedId={selectedId}
         targeting={targetMode !== null}
         destinationSelecting={moveSelecting}
+        attackPositions={attackPositions}
         targetableIds={targetableIds}
         routeDestinations={routeDestinations}
         moveArrows={moveArrows}
@@ -293,6 +304,7 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
         zoomRequest={zoomRequest}
         onSelect={select}
         onTarget={chooseTarget}
+        onAttackPosition={chooseAttackPosition}
         onMoveDestination={chooseMoveDestination}
         onCenterBeacon={() => setCenterRequest((value) => value + 1)}
         onAnchorChange={setAnchor}

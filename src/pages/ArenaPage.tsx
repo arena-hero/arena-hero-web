@@ -12,7 +12,7 @@ import { UnitActionDialog, type MapAnchor } from '../components/game/UnitActionD
 import { UpkeepWarning } from '../components/game/UpkeepWarning'
 import { useGameStream } from '../hooks/useGameStream'
 import { useAuth } from '../context/AuthContext'
-import { plannedShotMarkers, plannedSweepMarkers, rangerTargets } from '../lib/combatPreview'
+import { plannedShotMarkers, plannedSweepMarkers, rangerAttackOptions, vanguardAttackOptions } from '../lib/combatPreview'
 import { directionTo, moveTargets, plannedMoveArrows } from '../lib/movementPreview'
 import { getErrorMessage } from '../lib/errorMessage'
 import { getActionAvailability } from '../lib/actionAvailability'
@@ -75,6 +75,12 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     if (result.changed) commitManualPlan(result.plan)
   }, [commitManualPlan, game.explored, game.phase, game.state, game.tick, replaceMovementGoals, respawning])
   const selected = useMemo(() => game.state?.objects.find((object) => object.id === selectedId) ?? null, [game.state, selectedId])
+  const attackOptions = useMemo(() => {
+    if (!selected || !targetMode) return []
+    if (targetMode === 'SWEEP') return vanguardAttackOptions(selected)
+    return game.state ? rangerAttackOptions(game.state, selected) : []
+  }, [game.state, selected, targetMode])
+  const attackPositions = useMemo(() => attackOptions.map((option) => option.position), [attackOptions])
   const effective = useMemo(() => mergeCommandPlans(game.tick ?? 0, game.receipts, plan), [game.receipts, game.tick, plan])
   const actionAvailability = useMemo(() => game.state && selected ? getActionAvailability(game.state, selected, effective.plan) : null, [effective.plan, game.state, selected])
   const movementRoutes = useMemo(() => game.state ? buildMovementRoutes(game.state, game.explored, movementGoals, effective.plan) : [], [effective.plan, game.explored, game.state, movementGoals])
@@ -84,18 +90,17 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     return Object.entries(movementGoals).map(([objectId, position]) => ({ objectId, position, blocked: routesByObject.get(objectId)?.blocked ?? true }))
   }, [movementGoals, movementRoutes])
   const routeDestinations = useMemo(() => {
-    if (!moveSelecting || !game.state || !selected?.id) return plannedRouteDestinations
+    const attackDestinations = targetMode && selected?.id
+      ? attackOptions.map((option) => ({ objectId: selected.id!, position: option.position, blocked: false, selectable: true, immediate: true, hostile: true }))
+      : []
+    if (!moveSelecting || !game.state || !selected?.id) return [...plannedRouteDestinations, ...attackDestinations]
     const immediate = new Set(moveTargets(game.state, selected, effective.plan).map(positionKey))
     const selectable = reachableMovementDestinations(game.state, game.explored, selected, effective.plan).map((position) => ({ objectId: selected.id!, position, blocked: false, selectable: true, immediate: immediate.has(positionKey(position)) }))
     return [...plannedRouteDestinations.filter((destination) => destination.objectId !== selected.id), ...selectable]
-  }, [effective.plan, game.explored, game.state, moveSelecting, plannedRouteDestinations, selected])
+  }, [attackOptions, effective.plan, game.explored, game.state, moveSelecting, plannedRouteDestinations, selected, targetMode])
   const sweepMarkers = useMemo(() => game.state ? plannedSweepMarkers(game.state, effective.plan, effective.unitSources) : [], [effective.plan, effective.unitSources, game.state])
   const shotMarkers = useMemo(() => game.state ? plannedShotMarkers(game.state, effective.plan, effective.unitSources) : [], [effective.plan, effective.unitSources, game.state])
-  const targetableIds = useMemo(() => {
-    if (!targetMode) return new Set<string>()
-    if (targetMode === 'SHOOT' && game.state && selected) return new Set(rangerTargets(game.state, selected).map((object) => object.id!))
-    return new Set((game.state?.objects ?? []).filter((object) => object.id && object.controlled === false && (targetMode !== 'SWEEP' || Boolean(selected?.position && object.position && Math.abs(object.position[0] - selected.position[0]) + Math.abs(object.position[1] - selected.position[1]) === 1))).map((object) => object.id!))
-  }, [game.state, selected, targetMode])
+  const targetableIds = useMemo(() => new Set(attackOptions.flatMap((option) => option.targetId ? [option.targetId] : [])), [attackOptions])
   const select = (object: WorldObject | null) => { setSelectedId(object?.id ?? null); setTargetMode(null); setMoveSelecting(false); setMovementError(null) }
   const selectFromAssetList = (object: WorldObject) => {
     select(object)
@@ -111,15 +116,18 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     commitManualPlan(prepareManualUnitActionPlan(game.state, game.receipts, planRef.current, id, action))
   }
   const coreAction = (action: CoreAction | null) => { const coreId = game.state?.objects.find((object) => object.kind === 'CORE' && object.controlled)?.id; if (coreId) removeMovementGoal(coreId); setCoreAction(action) }
-  const chooseTarget = (target: WorldObject) => {
-    if (!selected?.id || !selected.position || !target.id || !target.position) return
+  const chooseAttackPosition = (position: Position) => {
+    if (!selected?.id || !selected.position) return
     if (targetMode === 'SWEEP' && selected.unit_type === 'VANGUARD') {
-      const direction = directionTo(selected.position, target.position); if (!direction) return
+      const direction = directionTo(selected.position, position); if (!direction) return
       unitAction(selected.id, { type: 'SWEEP', direction }); select(null); return
     }
     if (targetMode !== 'SHOOT' || selected.unit_type !== 'RANGER') return
-    unitAction(selected.id, { type: 'SHOOT', target_id: target.id, expected_cell: target.position }); select(null)
+    const option = attackOptions.find((candidate) => positionKey(candidate.position) === positionKey(position))
+    if (!option?.targetId) return
+    unitAction(selected.id, { type: 'SHOOT', target_id: option.targetId, expected_cell: position }); select(null)
   }
+  const chooseTarget = (target: WorldObject) => { if (target.position) chooseAttackPosition(target.position) }
   const chooseMoveDestination = (target: Position) => {
     if (!game.state || !selected?.id || !selected.position) return
     if (selected.position[0] === target[0] && selected.position[1] === target[1]) { removeMovementGoal(selected.id); if (selected.kind === 'CORE') setCoreAction(null); else setUnitAction(selected.id, null); select(null); return }
@@ -139,7 +147,7 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
       {!respawning && <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />}
       {!respawning && <UpkeepWarning state={game.state} className="pointer-events-none absolute left-3 right-3 top-16 z-20 lg:hidden" />}
       {!respawning && game.tick && <PendingCommands tick={game.tick} state={game.state} receipts={game.receipts} belowUpkeepWarning={upkeepShortfall} />}
-      <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerPosition={centerPosition} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onMoveDestination={chooseMoveDestination} onCenterBeacon={() => { setCenterPosition(game.state!.champion_beacon.position); setCenterRequest((value) => value + 1) }} onAnchorChange={setAnchor} />
+      <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} attackPositions={attackPositions} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerPosition={centerPosition} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onAttackPosition={chooseAttackPosition} onMoveDestination={chooseMoveDestination} onCenterBeacon={() => { setCenterPosition(game.state!.champion_beacon.position); setCenterRequest((value) => value + 1) }} onAnchorChange={setAnchor} />
       {!respawning && <ResourceActivity events={game.state.events} />}
       {respawning && <RespawnOverlay destroyedBy={coreDestroyer} />}
       {!respawning && selected?.controlled && anchor && actionAvailability && !targetMode && !moveSelecting && <UnitActionDialog anchor={anchor} selected={selected} plan={plan} movementGoal={selected.id ? movementGoals[selected.id] : undefined} phase={game.phase} resources={game.state.resources} availability={actionAvailability} onClose={() => select(null)} onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }} onSweepTargeting={() => { setMoveSelecting(false); setTargetMode('SWEEP') }} onMoveTargeting={() => { setTargetMode(null); setMovementError(null); setMoveSelecting(true) }} onCancelMovementGoal={() => cancelMovementGoal(selected)} onUnitAction={unitAction} onCoreAction={coreAction} />}

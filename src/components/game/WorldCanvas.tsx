@@ -25,6 +25,7 @@ interface Props {
   selectedId: string | null
   targeting: boolean
   destinationSelecting: boolean
+  attackPositions?: Position[]
   targetableIds: Set<string>
   routeDestinations: RouteDestination[]
   moveArrows: MoveArrow[]
@@ -35,6 +36,7 @@ interface Props {
   zoomRequest: number
   onSelect: (object: WorldObject | null) => void
   onTarget: (object: WorldObject) => void
+  onAttackPosition?: (position: Position) => void
   onMoveDestination: (position: Position) => void
   onCenterBeacon: () => void
   onAnchorChange: (anchor: MapAnchor | null) => void
@@ -42,7 +44,7 @@ interface Props {
   preferredSelectionId?: string
 }
 
-export interface RouteDestination { objectId: string; position: Position; blocked: boolean; selectable?: boolean; immediate?: boolean }
+export interface RouteDestination { objectId: string; position: Position; blocked: boolean; selectable?: boolean; immediate?: boolean; hostile?: boolean }
 
 type Camera = WorldCamera
 const MOVE_ANIMATION_MS = 420
@@ -83,7 +85,7 @@ interface TerrainTileCache {
 const unitSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedUnitSprite>>()
 const beaconSpriteCache = new WeakMap<HTMLImageElement, Map<string, CachedBeaconSprite>>()
 
-export function WorldCanvas({ state, explored, selectedId, targeting, destinationSelecting, targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, centerPosition, centerRequest, zoomRequest, onSelect, onTarget, onMoveDestination, onCenterBeacon, onAnchorChange, highlightPositions = [], preferredSelectionId }: Props) {
+export function WorldCanvas({ state, explored, selectedId, targeting, destinationSelecting, attackPositions = [], targetableIds, routeDestinations, moveArrows, sweepMarkers, shotMarkers, centerPosition, centerRequest, zoomRequest, onSelect, onTarget, onAttackPosition, onMoveDestination, onCenterBeacon, onAnchorChange, highlightPositions = [], preferredSelectionId }: Props) {
   const backgroundCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
@@ -120,6 +122,7 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const moveArrowsByPosition = useMemo(() => groupMarkersByOrigin(moveArrows), [moveArrows])
   const sweepMarkersByPosition = useMemo(() => groupMarkersByOrigin(sweepMarkers), [sweepMarkers])
   const shotMarkersByPosition = useMemo(() => groupMarkersByOrigin(shotMarkers), [shotMarkers])
+  const attackPositionKeys = useMemo(() => new Set(attackPositions.map(positionKey)), [attackPositions])
   const terrainScene = useMemo<TerrainScene>(() => ({
     explored,
     visible,
@@ -324,7 +327,10 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
   const choose = (position: Position) => {
     if (destinationSelecting) { onMoveDestination(position); return }
     const candidates = prioritizeSelectionCandidates(entityGroupsByPosition.get(positionKey(position)) ?? [], preferredSelectionId)
-    if (targeting) { const target = candidates.find((object) => object.id && targetableIds.has(object.id)); if (target) onTarget(target); return }
+    if (targeting) {
+      if (onAttackPosition && attackPositionKeys.has(positionKey(position))) { onAttackPosition(position); return }
+      const target = candidates.find((object) => object.id && targetableIds.has(object.id)); if (target) onTarget(target); return
+    }
     const features = mapFeaturesAt(position, state, explored)
     const choices: ({ key: string; type: 'object'; object: WorldObject } | { key: string; type: 'feature'; feature: MapFeatureView })[] = [
       ...candidates.map((object) => ({ key: `object:${object.id}`, type: 'object' as const, object })),
@@ -514,7 +520,7 @@ function drawWorldPlanMarkers(ctx: CanvasRenderingContext2D, size: { width: numb
   // without scanning every planned marker on each camera frame.
   for (let y = minY - 3; y <= maxY + 3; y++) for (let x = minX - 3; x <= maxX + 3; x++) {
     const key = `${x},${y}`
-    for (const destination of routeDestinations.get(key) ?? []) drawRouteDestination(ctx, toScreen(destination.position), camera.cell, destination.blocked, destination.selectable === true, destination.immediate === true)
+    for (const destination of routeDestinations.get(key) ?? []) drawRouteDestination(ctx, toScreen(destination.position), camera.cell, destination.blocked, destination.selectable === true, destination.immediate === true, destination.hostile === true)
     for (const arrow of moveArrows.get(key) ?? []) drawMoveArrow(ctx, toScreen(arrow.from), toScreen(arrow.to), camera.cell, arrow.hostile ? HOSTILE_CORAL : arrow.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE, arrow.dashed === true)
     for (const marker of sweepMarkers.get(key) ?? []) drawSweepSword(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, marker.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE)
     for (const marker of shotMarkers.get(key) ?? []) drawShotArc(ctx, toScreen(marker.from), toScreen(marker.to), camera.cell, marker.source === 'AGENT' ? AGENT_VIOLET : PRIMARY_BLUE)
@@ -745,20 +751,20 @@ function drawMoveArrow(ctx: CanvasRenderingContext2D, [fromX, fromY]: readonly [
   ctx.restore()
 }
 
-function drawRouteDestination(ctx: CanvasRenderingContext2D, [x, y]: readonly [number, number], cell: number, blocked: boolean, selectable: boolean, immediate: boolean) {
-  const color = blocked ? HOSTILE_CORAL : PRIMARY_BLUE
+function drawRouteDestination(ctx: CanvasRenderingContext2D, [x, y]: readonly [number, number], cell: number, blocked: boolean, selectable: boolean, immediate: boolean, hostile = false) {
+  const color = blocked || hostile ? HOSTILE_CORAL : PRIMARY_BLUE
   if (selectable) {
     const inset = Math.max(2, cell * .07), size = cell - inset * 2
     ctx.save()
-    ctx.fillStyle = immediate ? 'rgba(69,145,197,.22)' : 'rgba(69,145,197,.08)'
-    ctx.strokeStyle = immediate ? PRIMARY_BLUE_LIGHT : 'rgba(111,174,216,.38)'
+    ctx.fillStyle = hostile ? 'rgba(198,99,112,.18)' : immediate ? 'rgba(69,145,197,.22)' : 'rgba(69,145,197,.08)'
+    ctx.strokeStyle = hostile ? HOSTILE_CORAL : immediate ? PRIMARY_BLUE_LIGHT : 'rgba(111,174,216,.38)'
     ctx.lineWidth = immediate ? Math.max(2, cell * .042) : Math.max(1, cell * .022)
-    ctx.shadowColor = PRIMARY_BLUE
+    ctx.shadowColor = color
     ctx.shadowBlur = immediate ? Math.max(2, cell * .05) : 0
     ctx.fillRect(x - cell / 2 + inset, y - cell / 2 + inset, size, size)
     ctx.strokeRect(x - cell / 2 + inset + .5, y - cell / 2 + inset + .5, size - 1, size - 1)
     if (immediate) {
-      ctx.fillStyle = PRIMARY_BLUE_LIGHT
+      ctx.fillStyle = hostile ? '#e3a1aa' : PRIMARY_BLUE_LIGHT
       ctx.beginPath(); ctx.arc(x, y, Math.max(2, cell * .045), 0, Math.PI * 2); ctx.fill()
     }
     ctx.restore(); return
