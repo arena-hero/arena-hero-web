@@ -30,6 +30,10 @@ export function projectedEntityCount(state: PlayerState, position: Position, pla
   for (const object of state.objects) {
     if (object.kind !== 'UNIT' || !object.controlled || !object.id || object.id === excludedEntityId || !object.position) continue
     const action = plan.unit_actions[object.id]
+    if (action?.type === 'SELF_DESTRUCT') {
+      if (object.position[0] === position[0] && object.position[1] === position[1]) count--
+      continue
+    }
     if (action?.type !== 'MOVE' || !action.direction) continue
     const step = steps.find((candidate) => candidate.direction === action.direction)
     if (!step) continue

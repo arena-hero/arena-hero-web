@@ -226,9 +226,14 @@ function projectedEntityCounts(context: NavigationContext, plan: CommandPlan | u
   if (excluded?.position) adjustCount(counts, positionKey(excluded.position), -1)
   if (!plan) return counts
   for (const [objectId, action] of Object.entries(plan.unit_actions)) {
-    if (objectId === excludedEntityId || action.type !== 'MOVE' || !action.direction) continue
+    if (objectId === excludedEntityId) continue
     const object = context.objectsById.get(objectId)
     if (object?.kind !== 'UNIT' || !object.controlled || !object.position) continue
+    if (action.type === 'SELF_DESTRUCT') {
+      adjustCount(counts, positionKey(object.position), -1)
+      continue
+    }
+    if (action.type !== 'MOVE' || !action.direction) continue
     const destination = stepPosition(object.position, action.direction)
     if (!destination) continue
     adjustCount(counts, positionKey(object.position), -1)

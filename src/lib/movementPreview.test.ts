@@ -17,6 +17,7 @@ describe('movement preview', () => {
     )
     expect(moveTargets(full, unit)).not.toContainEqual([0, 1])
     expect(moveTargets(full, unit, { tick: 1, unit_actions: { first: { type: 'MOVE', direction: 'RIGHT' } } })).toContainEqual([0, 1])
+    expect(moveTargets(full, unit, { tick: 1, unit_actions: { first: { type: 'SELF_DESTRUCT' } } })).toContainEqual([0, 1])
   })
   it('counts a Core and Unit as a full destination cell', () => {
     const full = state(unit)

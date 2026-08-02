@@ -10,6 +10,7 @@ describe('getActionAvailability', () => {
     const resource: WorldObject = { kind: 'RESOURCE', positions: [[0, 0]] }
     expect(getActionAvailability(state([worker, resource]), worker).actions).toMatchObject({ HARVEST: true, DEPOSIT: false })
     expect(getActionAvailability(state([{ ...worker, cargo: 1 }, resource]), { ...worker, cargo: 1 }).actions.HARVEST).toBe(false)
+    expect(getActionAvailability(state([worker]), worker).actions.SELF_DESTRUCT).toBe(true)
   })
 
   it('only lets a loaded worker deposit on a stationary friendly core', () => {
@@ -51,6 +52,8 @@ describe('getActionAvailability', () => {
     expect(getActionAvailability(state([core, first], 20), core).spawns).toEqual({ WORKER: false, VANGUARD: false, RANGER: false })
     const afterDeparture = getActionAvailability(state([core, first], 20), core, { tick: 1, unit_actions: { first: { type: 'MOVE', direction: 'RIGHT' } } })
     expect(afterDeparture.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
+    const afterSelfDestruct = getActionAvailability(state([core, first], 20), core, { tick: 1, unit_actions: { first: { type: 'SELF_DESTRUCT' } } })
+    expect(afterSelfDestruct.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
   })
 
   it('allows only the same-cell object to pick up or its carrier to drop the Beacon', () => {

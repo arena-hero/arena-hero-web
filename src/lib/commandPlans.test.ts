@@ -49,6 +49,15 @@ describe('command plans', () => {
         unit_actions: { attacker: { type: 'MOVE', direction: 'RIGHT' } },
       },
     })).toBe(false)
+    expect(isReceivedNotice({
+      ...agent,
+      plan: {
+        ...agent.plan,
+        unit_actions: {
+          '00000000-0000-4000-8000-000000000003': { type: 'SELF_DESTRUCT' },
+        },
+      },
+    })).toBe(true)
   })
 
   it('pauses a Core auto-route when a colocated Worker deposits', () => {

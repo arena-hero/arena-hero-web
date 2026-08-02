@@ -9,7 +9,7 @@ import type {
 
 const unitActionTypes = new Set([
   'MOVE', 'HARVEST', 'DEPOSIT', 'SWEEP', 'SHOOT',
-  'PICKUP_BEACON', 'DROP_BEACON', 'WAIT',
+  'PICKUP_BEACON', 'DROP_BEACON', 'SELF_DESTRUCT', 'WAIT',
 ])
 const coreActionTypes = new Set([
   'SPAWN', 'REPAIR_SHIELD', 'START_MOVE', 'CANCEL_MOVE',

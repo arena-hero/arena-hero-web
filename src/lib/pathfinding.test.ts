@@ -27,6 +27,18 @@ describe('autonomous pathfinding', () => {
     expect(findMovementPath(world, known, unit, [2, 0]).path).toEqual([[0, 0], [0, 1], [1, 1], [2, 1], [2, 0]])
   })
 
+  it('routes into capacity released by self-destruct before movement', () => {
+    const first = { ...unit, id: 'first', position: [0, 1] as Position }
+    const second = { ...unit, id: 'second', position: [0, 1] as Position }
+    const world = state([unit, first, second])
+    const known = explored([0, 0], [0, 1])
+    expect(findMovementPath(world, known, unit, [0, 1]).path).toBeNull()
+    expect(findMovementPath(world, known, unit, [0, 1], {
+      tick: 1,
+      unit_actions: { first: { type: 'SELF_DESTRUCT' } },
+    }).path).toEqual([[0, 0], [0, 1]])
+  })
+
   it('allows Units through resource cells but keeps the Core off them', () => {
     const resource: WorldObject = { kind: 'RESOURCE', positions: [[1, 0]] }
     const known = explored([0, 0], [1, 0], [2, 0])

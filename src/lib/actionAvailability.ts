@@ -25,6 +25,7 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
   const carriesBeacon = state.champion_beacon.status === 'CARRIED' && state.champion_beacon.carrier_id === selected.id
   const canPickupBeacon = state.champion_beacon.status === 'GROUND' && samePosition(state.champion_beacon.position, selected.position)
   const beaconActions = { PICKUP_BEACON: canPickupBeacon, DROP_BEACON: carriesBeacon }
+  const unitActions = { SELF_DESTRUCT: true }
 
   if (selected.kind === 'CORE') {
     const normal = selected.state !== 'MOVING'
@@ -54,16 +55,16 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
     const coreHasResourceSpace = state.resources < resourceCapacity
     const canReachCoreStorage = (selected.cargo ?? 0) > 0 && Boolean(core)
     return {
-      actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: canReachCoreStorage && coreHasResourceSpace, ...beaconActions, WAIT: true },
+      actions: { MOVE: canMove, HARVEST: (selected.cargo ?? 0) === 0 && Boolean(resource), DEPOSIT: canReachCoreStorage && coreHasResourceSpace, ...beaconActions, ...unitActions, WAIT: true },
       spawns: unavailable.spawns,
       unavailableReasons: canReachCoreStorage && !coreHasResourceSpace ? { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: resourceCapacity } } : undefined,
     }
   }
   if (selected.unit_type === 'VANGUARD') {
     const canSweep = state.objects.some((object) => object.controlled === false && object.position && Math.abs(object.position[0] - selected.position![0]) + Math.abs(object.position[1] - selected.position![1]) === 1)
-    return { actions: { MOVE: canMove, SWEEP: canSweep, ...beaconActions, WAIT: true }, spawns: unavailable.spawns }
+    return { actions: { MOVE: canMove, SWEEP: canSweep, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns }
   }
-  if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: rangerTargets(state, selected).length > 0, ...beaconActions, WAIT: true }, spawns: unavailable.spawns }
+  if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: rangerTargets(state, selected).length > 0, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns }
   return unavailable
 }
 

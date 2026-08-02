@@ -18,7 +18,7 @@ describe('UnitActionDialog', () => {
 
   it('explains the population-based limit when a full Core blocks a deposit', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
-    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={{ ...selected, cargo: 1 }} plan={plan} phase="open" resources={10} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false }, unavailableReasons: { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: 10 } } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={{ ...selected, cargo: 1 }} plan={plan} phase="open" resources={10} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, SELF_DESTRUCT: true, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false }, unavailableReasons: { DEPOSIT: { code: 'CORE_RESOURCE_FULL', capacity: 10 } } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
     const deposit = screen.getByRole('button', { name: 'Deposit' })
     expect(deposit).toHaveAttribute('aria-disabled', 'true')
     await user.click(deposit)
@@ -41,6 +41,18 @@ describe('UnitActionDialog', () => {
     await user.click(screen.getByRole('button', { name: 'Harvest' }))
     expect(onUnitAction).toHaveBeenCalledWith('worker', { type: 'HARVEST' })
     expect(onClose).toHaveBeenCalledOnce()
+  })
+
+  it('confirms before submitting an irreversible self-destruct order', async () => {
+    const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true)
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, SELF_DESTRUCT: true, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)
+    await user.click(screen.getByRole('button', { name: 'Self-destruct' }))
+    expect(onUnitAction).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Self-destruct' }))
+    expect(onUnitAction).toHaveBeenCalledWith('worker', { type: 'SELF_DESTRUCT' })
+    expect(onClose).toHaveBeenCalledOnce()
+    confirm.mockRestore()
   })
 
   it('offers and immediately submits a relevant Beacon action', async () => {
