@@ -16,6 +16,7 @@ const GitHubPage = lazy(() => import('../pages/auth/GitHubPage').then((module) =
 const LinuxDOPage = lazy(() => import('../pages/auth/GitHubPage').then((module) => ({ default: module.LinuxDOPage })))
 const ArenaPage = lazy(() => import('../pages/ArenaPage').then((module) => ({ default: module.ArenaPage })))
 const TutorialPage = lazy(() => import('../pages/TutorialPage').then((module) => ({ default: module.TutorialPage })))
+const LeaderboardPage = lazy(() => import('../pages/LeaderboardPage').then((module) => ({ default: module.LeaderboardPage })))
 
 function RequireAuth() {
   const { user, loading } = useAuth()
@@ -33,6 +34,7 @@ function ArenaWithTutorialGate() {
 export default function App() {
   return <Suspense fallback={<div className="cosmic-bg grid min-h-dvh place-items-center"><div className="h-px w-28 overflow-hidden bg-white/10"><span className="block h-full w-1/2 animate-pulse bg-cyan-signal" /></div></div>}><Routes>
     <Route path="/" element={<LandingPage />} />
+    <Route path="/leaderboard" element={<LeaderboardPage />} />
     <Route element={<AuthLayout />}>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />

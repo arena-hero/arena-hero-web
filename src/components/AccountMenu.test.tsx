@@ -33,6 +33,7 @@ describe('AccountMenu', () => {
     expect(accountButton).toHaveTextContent('pilot')
     await user.click(accountButton)
     expect(screen.getByRole('menuitem', { name: 'Arena' })).toBeInTheDocument()
+    expect(screen.getByRole('menuitem', { name: 'Leaderboard' })).toHaveAttribute('href', '/leaderboard')
     expect(screen.getByRole('menuitem', { name: 'Training' })).toBeInTheDocument()
     expect(screen.getByRole('menuitem', { name: 'Documentation' })).toHaveAttribute('href', 'https://doc.arenahero.io/')
     expect(screen.getByRole('menuitem', { name: 'Documentation' })).toHaveAttribute('target', '_blank')

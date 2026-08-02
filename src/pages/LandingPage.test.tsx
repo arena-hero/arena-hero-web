@@ -16,6 +16,7 @@ describe('LandingPage', () => {
     expect(screen.getAllByRole('link', { name: 'Create account' })[0]).toHaveAttribute('href', '/register')
     expect(screen.getByAltText('Arena Hero tactical map with units, resources, and obstacles')).toHaveAttribute('src', '/assets/marketing/arena-gameplay.jpg')
     expect(screen.getByText('/api/v1/game/commands')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Leaderboard' })).toHaveAttribute('href', '/leaderboard')
     expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute('href', 'https://doc.arenahero.io/')
     expect(screen.getByRole('link', { name: 'Docs' })).toHaveAttribute('target', '_blank')
   })

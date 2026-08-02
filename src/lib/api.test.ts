@@ -28,6 +28,16 @@ describe('manual command API', () => {
     expect(JSON.parse(init?.body as string)).toEqual({ signup_token: 'one-time-token', username: 'hero' })
   })
 
+  it('loads the public leaderboard without authentication headers', async () => {
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ beacon_ticks_held: [], damage_dealt: [], core_destruction_participations: [] }), { status: 200, headers: { 'Content-Type': 'application/json' } }))
+
+    await api.leaderboard()
+
+    const [path, init] = fetchMock.mock.calls[0]
+    expect(path).toBe('/api/v1/leaderboard')
+    expect(new Headers(init?.headers).has('Authorization')).toBe(false)
+  })
+
   it('sends CSRF and a unique idempotency key with the complete plan', async () => {
     setCSRF('csrf-test')
     const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(new Response(JSON.stringify({ accepted: true, tick: 7, source: 'MANUAL', received_at: '2026-07-15T00:00:00Z' }), { status: 202, headers: { 'Content-Type': 'application/json' } }))

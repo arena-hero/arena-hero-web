@@ -4,7 +4,7 @@ import { initReactI18next } from 'react-i18next'
 const resources = {
   en: { translation: {
     brand: 'ARENA HERO', tagline: 'Persistent world. Precise orders.',
-    nav: { arena: 'Arena', tutorial: 'Training', documentation: 'Documentation', stats: 'Statistics', keys: 'API Keys' },
+    nav: { arena: 'Arena', leaderboard: 'Leaderboard', tutorial: 'Training', documentation: 'Documentation', stats: 'Statistics', keys: 'API Keys' },
     auth: {
       welcome: 'Return to the arena', create: 'Create your operator', email: 'Email', username: 'Username', password: 'Password', confirmPassword: 'Confirm password', passwordMismatch: 'The two passwords do not match.',
       login: 'Sign in', register: 'Create account', noAccount: 'No account yet?', hasAccount: 'Already registered?',
@@ -42,6 +42,10 @@ const resources = {
       agent: { title: 'Command it yourself. Or automate it.', body: 'Manual and local Agent orders share one compact protocol. A manual action can override the Agent for that object.', protocolLabel: 'Agent command loop', tick: 'Announce a new Tick while commands remain closed.', state: 'Read the visible world and open the command window.', commands: 'Send the latest action for each controlled object.', received: 'Stop sending and wait for the next Tick.' },
       final: { title: 'Your Core is waiting.', body: 'Join the persistent world and make the next Tick count.' },
       footer: 'A persistent tactical world for human players and local Agents.',
+    },
+    leaderboard: {
+      title: 'Leaderboard', subtitle: 'Lifetime records from the persistent world.', rank: 'Rank', player: 'Player', score: 'Score', empty: 'No ranked players yet.', unavailable: 'The leaderboard is temporarily unavailable.', refreshFailed: 'The latest refresh failed. Showing the previous rankings.',
+      metrics: { beacon_ticks_held: 'Beacon ticks held', damage_dealt: 'Damage dealt', core_destruction_participations: 'Core destruction participations' },
     },
     errors: {
       emailNotVerified: 'Please verify your email before signing in.', invalidCredentials: 'The email or password is incorrect.', loginRateLimited: 'Too many failed sign-in attempts. Wait five minutes and try again.',
@@ -100,13 +104,13 @@ const resources = {
         12: { title: 'Your Core is ready.', body: 'You can now move, gather, build, fight, and contest the Champion Beacon in the persistent world.', hint: '' },
       },
     },
-    stats: { title: 'Operator statistics', subtitle: 'Private lifetime record', damageDealt: 'Damage dealt', damageReceived: 'Damage received', unitsDestroyed: 'Unit assists', coresDestroyed: 'Core assists', harvested: 'Harvested', deposited: 'Deposited', beaconPickups: 'Beacon pickups', beaconTicksHeld: 'Beacon ticks held', beaconBonusHarvested: 'Beacon bonus resources', spawned: 'Units spawned', lost: 'Units lost', unitHPRecovered: 'Unit HP recovered', coreHPRecovered: 'Core HP recovered', survival: 'Core survival ticks', respawns: 'Respawns' },
+    stats: { title: 'Operator statistics', subtitle: 'Your complete lifetime record', damageDealt: 'Damage dealt', damageReceived: 'Damage received', unitsDestroyed: 'Unit assists', coresDestroyed: 'Core assists', harvested: 'Harvested', deposited: 'Deposited', beaconPickups: 'Beacon pickups', beaconTicksHeld: 'Beacon ticks held', beaconBonusHarvested: 'Beacon bonus resources', spawned: 'Units spawned', lost: 'Units lost', unitHPRecovered: 'Unit HP recovered', coreHPRecovered: 'Core HP recovered', survival: 'Core survival ticks', respawns: 'Respawns' },
     keys: { title: 'API keys', subtitle: 'Connect a local agent to the arena.', create: 'Create key', createTitle: 'Create a new API key', createDescription: 'Create a credential for an Agent or local integration. The full key will be shown once after creation.', createConfirm: 'Create API key', creating: 'Creating…', createdTitle: 'API key created', empty: 'No API keys yet.', emptyHelp: 'Create one when you are ready to connect an Agent.', copy: 'Copy key', copied: 'Copied', copySuccess: 'Copied to clipboard.', copyFailed: 'Could not copy. Select and copy the key manually.', delete: 'Delete key', deleting: 'Deleting…', deleteTitle: 'Delete this API key?', deleteDescription: 'Anything using {{key}} will immediately lose access. This cannot be undone.', deleted: 'API key deleted.', created: 'Created', lastUsed: 'Last used', never: 'Never', oneTime: 'Copy this key now. It will never be shown again.', close: 'I saved it' },
     common: { loading: 'Loading…', retry: 'Retry', cancel: 'Cancel', close: 'Close', error: 'Something went wrong', demo: 'Open demo arena', language: 'Language', account: 'Account' },
   } },
   zh: { translation: {
     brand: 'ARENA HERO', tagline: '永久世界，精确指令。',
-    nav: { arena: '战场', tutorial: '新手教程', documentation: '文档', stats: '统计', keys: 'API 密钥' },
+    nav: { arena: '战场', leaderboard: '排行榜', tutorial: '新手教程', documentation: '文档', stats: '统计', keys: 'API 密钥' },
     auth: {
       welcome: '重返战场', create: '创建操作员', email: '邮箱', username: '用户名', password: '密码', confirmPassword: '再次输入密码', passwordMismatch: '两次输入的密码不一致。',
       login: '登录', register: '创建账号', noAccount: '还没有账号？', hasAccount: '已经注册？',
@@ -144,6 +148,10 @@ const resources = {
       agent: { title: '亲自指挥，也可以交给 Agent。', body: '手动模式与本地 Agent 共用一套紧凑协议。手动行动可以覆盖该对象的 Agent 指令。', protocolLabel: 'Agent 指令循环', tick: '宣布新 Tick，此时指令仍然关闭。', state: '读取可见世界，同时开放指令窗口。', commands: '为每个受控对象发送最新行动。', received: '停止发送，等待下一个 Tick。' },
       final: { title: '你的 Core 正在等待。', body: '进入这个永久世界，让下一个 Tick 变得重要。' },
       footer: '为真人玩家与本地 Agent 构建的永久战术世界。',
+    },
+    leaderboard: {
+      title: '排行榜', subtitle: '永久世界中的终身记录。', rank: '排名', player: '玩家', score: '分数', empty: '还没有玩家进入这个榜单。', unavailable: '排行榜暂时不可用。', refreshFailed: '最新数据刷新失败，当前显示上一次结果。',
+      metrics: { beacon_ticks_held: '信标持有 Tick', damage_dealt: '造成伤害', core_destruction_participations: 'Core 摧毁参与' },
     },
     errors: {
       emailNotVerified: '请先完成邮箱验证，再登录游戏。', invalidCredentials: '邮箱或密码不正确。', loginRateLimited: '登录失败次数过多，请等待五分钟后重试。',
@@ -202,7 +210,7 @@ const resources = {
         12: { title: '你的 Core 已准备就绪。', body: '你已经掌握移动、采集、生产、战斗和争夺冠军信标的基本操作。', hint: '' },
       },
     },
-    stats: { title: '操作员统计', subtitle: '仅自己可见的生涯记录', damageDealt: '造成伤害', damageReceived: '承受伤害', unitsDestroyed: '单位摧毁参与', coresDestroyed: 'Core 摧毁参与', harvested: '采集资源', deposited: '交付资源', beaconPickups: '信标拾取次数', beaconTicksHeld: '持有信标 Tick', beaconBonusHarvested: '信标额外采集', spawned: '生产单位', lost: '损失单位', unitHPRecovered: '单位恢复 HP', coreHPRecovered: 'Core 恢复 HP', survival: 'Core 存活 Tick', respawns: '重生次数' },
+    stats: { title: '操作员统计', subtitle: '你的完整生涯记录', damageDealt: '造成伤害', damageReceived: '承受伤害', unitsDestroyed: '单位摧毁参与', coresDestroyed: 'Core 摧毁参与', harvested: '采集资源', deposited: '交付资源', beaconPickups: '信标拾取次数', beaconTicksHeld: '持有信标 Tick', beaconBonusHarvested: '信标额外采集', spawned: '生产单位', lost: '损失单位', unitHPRecovered: '单位恢复 HP', coreHPRecovered: 'Core 恢复 HP', survival: 'Core 存活 Tick', respawns: '重生次数' },
     keys: { title: 'API 密钥', subtitle: '将你的本地 Agent 接入战场。', create: '创建密钥', createTitle: '创建新的 API 密钥', createDescription: '为 Agent 或本地集成创建凭据。创建后，完整密钥只会显示一次。', createConfirm: '创建 API 密钥', creating: '正在创建……', createdTitle: 'API 密钥已创建', empty: '还没有 API 密钥。', emptyHelp: '准备连接 Agent 时再创建一个即可。', copy: '复制密钥', copied: '已复制', copySuccess: '已复制到剪贴板。', copyFailed: '复制失败，请手动选择并复制密钥。', delete: '删除密钥', deleting: '正在删除……', deleteTitle: '删除这个 API 密钥？', deleteDescription: '正在使用 {{key}} 的程序会立即失去访问权限，此操作无法撤销。', deleted: 'API 密钥已删除。', created: '创建时间', lastUsed: '最近使用', never: '从未', oneTime: '请立即复制。此密钥之后不会再次显示。', close: '我已保存' },
     common: { loading: '加载中…', retry: '重试', cancel: '取消', close: '关闭', error: '出现错误', demo: '进入演示战场', language: '语言', account: '账号' },
   } },

@@ -128,6 +128,18 @@ export interface PlayerStats {
   respawn_count: number
 }
 
+export interface LeaderboardEntry {
+  rank: number
+  username: string
+  score: number
+}
+
+export interface Leaderboard {
+  beacon_ticks_held: LeaderboardEntry[]
+  damage_dealt: LeaderboardEntry[]
+  core_destruction_participations: LeaderboardEntry[]
+}
+
 export interface APIKeyView {
   id: string
   name: string

@@ -1,4 +1,4 @@
-import type { APIKeyView, AuthOptions, CommandPlan, PlayerStats, Receipt, Session, User } from './types'
+import type { APIKeyView, AuthOptions, CommandPlan, Leaderboard, PlayerStats, Receipt, Session, User } from './types'
 
 export class APIError extends Error {
   constructor(
@@ -34,6 +34,7 @@ async function request<T>(path: string, init: RequestInit = {}): Promise<T> {
 
 export const api = {
   authOptions: () => request<AuthOptions>('/api/v1/auth/options'),
+  leaderboard: () => request<Leaderboard>('/api/v1/leaderboard'),
   me: () => request<User>('/api/v1/me'),
   login: async (email: string, password: string) => {
     const session = await request<Session>('/api/v1/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) })
