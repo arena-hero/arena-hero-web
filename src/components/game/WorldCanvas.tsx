@@ -149,6 +149,16 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
       setCamera(pending)
     })
   }, [])
+  const setCameraImmediately = useCallback((update: (current: Camera) => Camera) => {
+    if (cameraFrameRef.current !== null) cancelAnimationFrame(cameraFrameRef.current)
+    cameraFrameRef.current = null
+    pendingCameraRef.current = null
+    setCamera((current) => {
+      const next = update(current)
+      cameraRef.current = next
+      return next
+    })
+  }, [])
   const scheduleZoom = useCallback((nextCell: (current: number) => number) => {
     setZooming(true)
     scheduleCamera((current) => ({ ...current, cell: nextCell(current.cell) }))
@@ -215,15 +225,15 @@ export function WorldCanvas({ state, explored, selectedId, targeting, destinatio
     const explicitlyRequested = centerRequest !== previousCenterRequest.current
     previousCenterRequest.current = centerRequest
     if (explicitlyRequested && centerPosition) {
-      setCamera((current) => ({ ...current, x: centerPosition[0], y: centerPosition[1] }))
+      setCameraImmediately((current) => ({ ...current, x: centerPosition[0], y: centerPosition[1] }))
       return
     }
     const core = entities.find((object) => object.kind === 'CORE' && object.controlled)
     if (!core?.position) { centeredCoreId.current = null; return }
     if (!explicitlyRequested && centeredCoreId.current === core.id) return
     centeredCoreId.current = core.id ?? 'controlled-core'
-    setCamera((current) => ({ ...current, x: core.position![0], y: core.position![1] }))
-  }, [centerPosition, centerRequest, entities])
+    setCameraImmediately((current) => ({ ...current, x: core.position![0], y: core.position![1] }))
+  }, [centerPosition, centerRequest, entities, setCameraImmediately])
   useEffect(() => {
     if (zoomRequest) scheduleZoom((current) => Math.min(MAX_WORLD_CELL_SIZE, Math.max(MIN_WORLD_CELL_SIZE, current + Math.sign(zoomRequest) * 8)))
   }, [scheduleZoom, zoomRequest])

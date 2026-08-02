@@ -97,6 +97,12 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
     return new Set((game.state?.objects ?? []).filter((object) => object.id && object.controlled === false && (targetMode !== 'SWEEP' || Boolean(selected?.position && object.position && Math.abs(object.position[0] - selected.position[0]) + Math.abs(object.position[1] - selected.position[1]) === 1))).map((object) => object.id!))
   }, [game.state, selected, targetMode])
   const select = (object: WorldObject | null) => { setSelectedId(object?.id ?? null); setTargetMode(null); setMoveSelecting(false); setMovementError(null) }
+  const selectFromAssetList = (object: WorldObject) => {
+    select(object)
+    if (!object.position) return
+    setCenterPosition(object.position)
+    setCenterRequest((value) => value + 1)
+  }
   const setUnitAction = (id: string, action: UnitAction | null) => { const current = planRef.current; const unit_actions = { ...current.unit_actions }; if (action) unit_actions[id] = action; else delete unit_actions[id]; commitManualPlan({ ...current, unit_actions }) }
   const setCoreAction = (action: CoreAction | null) => { const current = planRef.current; if (action) { commitManualPlan({ ...current, core_action: action }); return } const next = { ...current }; delete next.core_action; commitManualPlan(next) }
   const unitAction = (id: string, action: UnitAction | null) => {
@@ -128,7 +134,7 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const cancelMovementGoal = (object: WorldObject) => { if (!object.id) return; removeMovementGoal(object.id); if (object.kind === 'CORE') setCoreAction(null); else setUnitAction(object.id, null); select(null) }
   if (!game.state) return <div className="grid h-dvh place-items-center"><div className="text-center"><div className="mx-auto mb-4 size-2 animate-pulse rounded-full bg-cyan-signal shadow-[0_0_14px_rgba(69,145,197,.45)]" /><p className="font-mono text-xs tracking-[.2em] text-zinc-500">{t(`game.${game.phase}`)}</p>{game.error && <p role="alert" className="mt-3 text-xs text-coral-hostile">{getErrorMessage(game.error)}</p>}</div></div>
   return <div className="grid h-dvh min-h-[560px] grid-cols-1 overflow-hidden lg:grid-cols-[260px_1fr]">
-    <AssetList state={game.state} objects={game.state.objects} selectedId={selectedId} onSelect={select} />
+    <AssetList state={game.state} objects={game.state.objects} selectedId={selectedId} onSelect={selectFromAssetList} />
     <section className="relative min-h-0 overflow-hidden">
       {!respawning && <GameHUD phase={game.phase} stateReceivedAt={game.stateReceivedAt} />}
       {!respawning && <UpkeepWarning state={game.state} className="pointer-events-none absolute left-3 right-3 top-16 z-20 lg:hidden" />}
