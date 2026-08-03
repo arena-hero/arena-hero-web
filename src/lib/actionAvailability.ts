@@ -1,5 +1,4 @@
 import type { CommandPlan, CoreActionType, PlayerState, UnitActionType, UnitType, WorldObject } from './types'
-import { rangerAttackOptions } from './combatPreview'
 import { coreResourceCapacity, MAX_ENTITIES_PER_CELL } from './gameRules'
 import { moveTargets, projectedEntityCount } from './movementPreview'
 
@@ -74,7 +73,7 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
   if (selected.unit_type === 'VANGUARD') {
     return { actions: { MOVE: canMove, SWEEP: true, ...healingActions, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns, unavailableReasons: !canHeal && healReason ? { HEAL: healReason } : undefined }
   }
-  if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: rangerAttackOptions(state, selected).length > 0, ...healingActions, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns, unavailableReasons: !canHeal && healReason ? { HEAL: healReason } : undefined }
+	if (selected.unit_type === 'RANGER') return { actions: { MOVE: canMove, SHOOT: true, ...healingActions, ...beaconActions, ...unitActions, WAIT: true }, spawns: unavailable.spawns, unavailableReasons: !canHeal && healReason ? { HEAL: healReason } : undefined }
   return unavailable
 }
 

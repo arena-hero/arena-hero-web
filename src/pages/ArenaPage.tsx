@@ -112,7 +112,10 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   }, [attackOptions, effective.plan, game.explored, game.state, moveSelecting, plannedRouteDestinations, selected, targetMode])
   const sweepMarkers = useMemo(() => game.state ? plannedSweepMarkers(game.state, effective.plan, effective.unitSources) : [], [effective.plan, effective.unitSources, game.state])
   const shotMarkers = useMemo(() => game.state ? plannedShotMarkers(game.state, effective.plan, effective.unitSources) : [], [effective.plan, effective.unitSources, game.state])
-  const targetableIds = useMemo(() => new Set(attackOptions.flatMap((option) => option.targetId ? [option.targetId] : [])), [attackOptions])
+	const targetableIds = useMemo(() => {
+		const positions = new Set(attackPositions.map(positionKey))
+		return new Set((game.state?.objects ?? []).flatMap((object) => object.id && object.controlled === false && object.position && positions.has(positionKey(object.position)) ? [object.id] : []))
+	}, [attackPositions, game.state])
   const select = (object: WorldObject | null) => { setSelectedId(object?.id ?? null); setTargetMode(null); setMoveSelecting(false); setMovementError(null) }
   const selectFromAssetList = (object: WorldObject) => {
     select(object)
@@ -134,10 +137,10 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
       const direction = directionTo(selected.position, position); if (!direction) return
       unitAction(selected.id, { type: 'SWEEP', direction }); select(null); return
     }
-    if (targetMode !== 'SHOOT' || selected.unit_type !== 'RANGER') return
-    const option = attackOptions.find((candidate) => positionKey(candidate.position) === positionKey(position))
-    if (!option?.targetId) return
-    unitAction(selected.id, { type: 'SHOOT', target_id: option.targetId, expected_cell: position }); select(null)
+		if (targetMode !== 'SHOOT' || selected.unit_type !== 'RANGER') return
+		const option = attackOptions.find((candidate) => positionKey(candidate.position) === positionKey(position))
+		if (!option) return
+		unitAction(selected.id, { type: 'SHOOT', expected_cell: position }); select(null)
   }
   const chooseTarget = (target: WorldObject) => { if (target.position) chooseAttackPosition(target.position) }
   const chooseMoveDestination = (target: Position) => {

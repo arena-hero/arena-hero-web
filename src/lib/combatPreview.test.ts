@@ -37,21 +37,17 @@ describe('combat preview', () => {
     const world: PlayerState = { ...state, objects: [ranger, adjacent, open, diagonal, offAxis, blockedDiagonal, blocked, friendlyUnit, friendlyCore, { kind: 'OBSTACLE', positions: [[1, 0], [-1, 1]] }] }
     expect(rangerTargets(world, ranger).map((target) => target.id)).toEqual(['adjacent', 'open', 'diagonal'])
   })
-  it('aims at a cell and automatically tracks the lowest-HP enemy that can enter it', () => {
-    const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
-    const high: WorldObject = { kind: 'UNIT', id: 'high', controlled: false, position: [3, 1], hp: 4, unit_type: 'VANGUARD' }
-    const low: WorldObject = { kind: 'UNIT', id: 'low', controlled: false, position: [4, 0], hp: 1, unit_type: 'WORKER' }
-    const options = rangerAttackOptions({ ...state, objects: [ranger, high, low] }, ranger)
-    expect(options.find((option) => option.position[0] === 3 && option.position[1] === 0)).toEqual({ position: [3, 0], targetId: 'low' })
-  })
-  it('prefers an enemy already in the chosen cell and does not offer cells behind obstacles', () => {
-    const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
-    const occupant: WorldObject = { kind: 'UNIT', id: 'occupant', controlled: false, position: [0, 2], hp: 4, unit_type: 'VANGUARD' }
-    const lowerAdjacent: WorldObject = { kind: 'UNIT', id: 'lower', controlled: false, position: [1, 2], hp: 1, unit_type: 'WORKER' }
-    const blocked: WorldObject = { kind: 'UNIT', id: 'blocked', controlled: false, position: [4, 0], hp: 1, unit_type: 'WORKER' }
-    const options = rangerAttackOptions({ ...state, objects: [ranger, occupant, lowerAdjacent, blocked, { kind: 'OBSTACLE', positions: [[2, 0]] }] }, ranger)
-    expect(options.find((option) => option.position[0] === 0 && option.position[1] === 2)?.targetId).toBe('occupant')
-    expect(options.some((option) => option.position[0] === 3 && option.position[1] === 0)).toBe(false)
+	it('offers every unobstructed Ranger cell without requiring a visible enemy', () => {
+		const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
+		const options = rangerAttackOptions({ ...state, objects: [ranger] }, ranger)
+		expect(options).toHaveLength(24)
+		expect(options).toContainEqual({ position: [3, 0] })
+	})
+	it('does not offer an obstacle cell or cells behind it', () => {
+		const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
+		const options = rangerAttackOptions({ ...state, objects: [ranger, { kind: 'OBSTACLE', positions: [[2, 0]] }] }, ranger)
+		expect(options.some((option) => option.position[0] === 2 && option.position[1] === 0)).toBe(false)
+		expect(options.some((option) => option.position[0] === 3 && option.position[1] === 0)).toBe(false)
   })
   it('builds a shot arc from its expected target cell', () => {
     const ranger: WorldObject = { kind: 'UNIT', id: 'ranger', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }

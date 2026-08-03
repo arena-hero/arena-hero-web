@@ -61,7 +61,7 @@ describe('ArenaPage asset selection', () => {
     expect(map).toHaveAttribute('data-center-request', '1')
   })
 
-  it('submits a predicted Ranger cell using the lowest-HP possible target', async () => {
+	it('submits a Ranger cell shot without requiring a visible target', async () => {
     const user = userEvent.setup()
     render(<ArenaPage demo />)
 
@@ -69,9 +69,9 @@ describe('ArenaPage asset selection', () => {
     await user.click(screen.getByRole('button', { name: 'Shoot' }))
     await user.click(screen.getByRole('button', { name: 'Attack predicted cell' }))
 
-    await waitFor(() => expect(game.submit).toHaveBeenCalledWith({
-      tick: 42,
-      unit_actions: { ranger: { type: 'SHOOT', target_id: 'low', expected_cell: [3, 0] } },
-    }))
+		await waitFor(() => expect(game.submit).toHaveBeenCalledWith({
+			tick: 42,
+			unit_actions: { ranger: { type: 'SHOOT', expected_cell: [3, 0] } },
+		}))
   })
 })

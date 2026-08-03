@@ -23,11 +23,11 @@ describe('getActionAvailability', () => {
     expect(getActionAvailability(state([worker, { ...core, state: 'MOVING' }]), worker).actions.DEPOSIT).toBe(false)
   })
 
-  it('always lets a Vanguard choose a cell but requires a possible Ranger target', () => {
+	it('always lets Vanguards and Rangers choose an attack cell', () => {
     const vanguard: WorldObject = { kind: 'UNIT', id: 'v', controlled: true, position: [0, 0], hp: 4, unit_type: 'VANGUARD' }
     const ranger: WorldObject = { kind: 'UNIT', id: 'r', controlled: true, position: [0, 0], hp: 2, unit_type: 'RANGER' }
     expect(getActionAvailability(state([vanguard]), vanguard).actions.SWEEP).toBe(true)
-    expect(getActionAvailability(state([ranger]), ranger).actions.SHOOT).toBe(false)
+		expect(getActionAvailability(state([ranger]), ranger).actions.SHOOT).toBe(true)
     const adjacentEnemy: WorldObject = { kind: 'UNIT', id: 'enemy', controlled: false, position: [1, 0], hp: 2, unit_type: 'WORKER' }
     expect(getActionAvailability(state([vanguard, adjacentEnemy]), vanguard).actions.SWEEP).toBe(true)
     const enteringRange: WorldObject = { kind: 'UNIT', id: 'entering', controlled: false, position: [4, 0], hp: 1, unit_type: 'WORKER' }
