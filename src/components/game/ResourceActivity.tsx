@@ -34,7 +34,7 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
       ? Coins
           : item.kind === 'DROPPED'
           ? PackageOpen
-          : item.kind === 'DESTROYED'
+          : item.kind === 'DESTROYED' || item.kind === 'CORE_SELF_DESTRUCT'
             ? Trash2
             : Pickaxe
         const message = item.kind === 'FULL'
@@ -68,6 +68,8 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
               ? t('game.cargoDropped', { count: item.amount })
               : item.kind === 'DESTROYED'
                 ? t('game.resourceOverflowDestroyed', { count: item.amount })
+                : item.kind === 'CORE_SELF_DESTRUCT'
+                  ? t('game.coreSelfDestructed')
                 : t('game.cargoRecovered', { count: item.amount })
         return <li key={item.eventId} className="flex min-h-11 items-center gap-2.5 px-3.5 py-2">
           <Icon
@@ -83,7 +85,7 @@ export function ResourceActivity({ events }: { events: GameEvent[] }) {
         ? 'text-emerald-300'
               : item.kind === 'DROPPED'
               ? 'text-violet-300'
-              : item.kind === 'DESTROYED'
+              : item.kind === 'DESTROYED' || item.kind === 'CORE_SELF_DESTRUCT'
                 ? 'text-red-300'
                 : 'text-cyan-signal'}
           />

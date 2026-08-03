@@ -37,7 +37,7 @@ describe('getActionAvailability', () => {
   it('allows post-combat Core actions to be planned before damage or captured resources', () => {
     const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
     const availability = getActionAvailability(state([core], 4), core)
-    expect(availability.actions).toMatchObject({ HEAL: true, REPAIR_SHIELD: true })
+    expect(availability.actions).toMatchObject({ SELF_DESTRUCT: true, HEAL: true, REPAIR_SHIELD: true })
     expect(availability.spawns).toEqual({ WORKER: true, VANGUARD: true, RANGER: true })
     const funded = getActionAvailability(state([{ ...core, shield: 4 }], 12), { ...core, shield: 4 })
     expect(funded.actions.REPAIR_SHIELD).toBe(true)
@@ -46,6 +46,13 @@ describe('getActionAvailability', () => {
     const beaconState = { ...state([{ ...core, shield: 9 }], 1), champion_beacon: { position: [0, 0] as [number, number], status: 'CARRIED' as const, carrier_id: 'core' } }
     expect(getActionAvailability(beaconState, { ...core, shield: 9 }).actions.REPAIR_SHIELD).toBe(true)
     expect(getActionAvailability(beaconState, { ...core, shield: 10 }).actions.REPAIR_SHIELD).toBe(true)
+  })
+
+  it('allows a moving Core to self-destruct without enabling its restricted actions', () => {
+    const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'MOVING', move_direction: 'RIGHT', move_progress: 2, move_required_ticks: 4, destination: [1, 0] }
+    const availability = getActionAvailability(state([core], 20), core)
+    expect(availability.actions).toMatchObject({ SELF_DESTRUCT: true, CANCEL_MOVE: true, HEAL: false, REPAIR_SHIELD: false, WAIT: true })
+    expect(availability.spawns).toEqual({ WORKER: false, VANGUARD: false, RANGER: false })
   })
 
   it('only allows Unit healing at its own stationary Core', () => {

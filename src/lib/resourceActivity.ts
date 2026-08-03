@@ -58,7 +58,13 @@ interface UpkeepDamageActivityItem {
   position: Position
 }
 
-export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem | HealActivityItem | HealFailureActivityItem | UpkeepDamageActivityItem
+interface CoreSelfDestructActivityItem {
+  eventId: string
+  kind: 'CORE_SELF_DESTRUCT'
+  position: Position
+}
+
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem | HealActivityItem | HealFailureActivityItem | UpkeepDamageActivityItem | CoreSelfDestructActivityItem
 
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
@@ -69,6 +75,9 @@ export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivit
     const hp = event.values?.hp
     const available = event.values?.available
     const destroyed = event.values?.destroyed
+    if (event.event_type === 'CORE_DESTROYED' && event.reason_code === 'SELF_DESTRUCT') {
+      return [{ eventId: event.event_id, kind: 'CORE_SELF_DESTRUCT', position: event.position }]
+    }
     if (
       event.event_type === 'UNIT_DAMAGED'
       && event.reason_code === 'UPKEEP_DEFICIT'

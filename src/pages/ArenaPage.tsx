@@ -16,7 +16,7 @@ import { plannedShotMarkers, plannedSweepMarkers, rangerAttackOptions, vanguardA
 import { directionTo, moveTargets, plannedMoveArrows } from '../lib/movementPreview'
 import { getErrorMessage } from '../lib/errorMessage'
 import { getActionAvailability } from '../lib/actionAvailability'
-import { coreDestroyerFromEvents } from '../lib/destruction'
+import { coreDestructionFromEvents } from '../lib/destruction'
 import { applyAutonomousMovement, buildMovementRoutes, findMovementPath, reachableMovementDestinations, readMovementGoals, type MovementGoals, type PathFailure } from '../lib/pathfinding'
 import { mergeCommandPlans, prepareManualUnitActionPlan } from '../lib/commandPlans'
 import type { CommandPlan, CoreAction, Position, UnitAction, WorldObject } from '../lib/types'
@@ -30,7 +30,9 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   const [movementError, setMovementError] = useState<PathFailure | null>(null)
   const [anchor, setAnchor] = useState<MapAnchor | null>(null)
   const destroyerStorageKey = `arena-hero.core-destroyer.${demo ? 'demo' : user?.username ?? 'anonymous'}`
+  const selfDestructStorageKey = `arena-hero.core-self-destructed.${demo ? 'demo' : user?.username ?? 'anonymous'}`
   const [coreDestroyer, setCoreDestroyer] = useState<string | null>(() => sessionStorage.getItem(destroyerStorageKey))
+  const [coreSelfDestructed, setCoreSelfDestructed] = useState(() => sessionStorage.getItem(selfDestructStorageKey) === 'true')
   const [centerRequest, setCenterRequest] = useState(0); const [zoomRequest, setZoomRequest] = useState(0)
   const [centerPosition, setCenterPosition] = useState<Position | null>(null)
   const [plan, setPlan] = useState<CommandPlan>({ tick: game.tick ?? 0, unit_actions: {} })
@@ -54,10 +56,20 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
   useEffect(() => { if (respawning) { setSelectedId(null); setTargetMode(null); setMoveSelecting(false); setMovementError(null); setAnchor(null); if (Object.keys(movementGoalsRef.current).length) replaceMovementGoals({}) } }, [replaceMovementGoals, respawning])
   useEffect(() => {
     if (!game.state) return
-    if (!respawning) { setCoreDestroyer(null); sessionStorage.removeItem(destroyerStorageKey); return }
-    const destroyer = coreDestroyerFromEvents(game.state.events)
-    if (destroyer) { setCoreDestroyer(destroyer); sessionStorage.setItem(destroyerStorageKey, destroyer) }
-  }, [destroyerStorageKey, game.state, respawning])
+    if (!respawning) {
+      setCoreDestroyer(null); setCoreSelfDestructed(false)
+      sessionStorage.removeItem(destroyerStorageKey); sessionStorage.removeItem(selfDestructStorageKey)
+      return
+    }
+    const destruction = coreDestructionFromEvents(game.state.events)
+    if (!destruction) return
+    setCoreDestroyer(destruction.destroyedBy)
+    setCoreSelfDestructed(destruction.selfDestructed)
+    if (destruction.destroyedBy) sessionStorage.setItem(destroyerStorageKey, destruction.destroyedBy)
+    else sessionStorage.removeItem(destroyerStorageKey)
+    if (destruction.selfDestructed) sessionStorage.setItem(selfDestructStorageKey, 'true')
+    else sessionStorage.removeItem(selfDestructStorageKey)
+  }, [destroyerStorageKey, game.state, respawning, selfDestructStorageKey])
   const commitManualPlan = useCallback((nextPlan: CommandPlan) => {
     planRef.current = nextPlan; setPlan(nextPlan)
     submitQueueRef.current = submitQueueRef.current.then(async () => {
@@ -149,7 +161,7 @@ export function ArenaPage({ demo = false }: { demo?: boolean }) {
       {!respawning && game.tick && <PendingCommands tick={game.tick} state={game.state} receipts={game.receipts} belowUpkeepWarning={upkeepShortfall} />}
       <WorldCanvas state={game.state} explored={game.explored} selectedId={selectedId} targeting={targetMode !== null} destinationSelecting={moveSelecting} attackPositions={attackPositions} targetableIds={targetableIds} routeDestinations={routeDestinations} moveArrows={moveArrows} sweepMarkers={sweepMarkers} shotMarkers={shotMarkers} centerPosition={centerPosition} centerRequest={centerRequest} zoomRequest={zoomRequest} onSelect={select} onTarget={chooseTarget} onAttackPosition={chooseAttackPosition} onMoveDestination={chooseMoveDestination} onCenterBeacon={() => { setCenterPosition(game.state!.champion_beacon.position); setCenterRequest((value) => value + 1) }} onAnchorChange={setAnchor} />
       {!respawning && <ResourceActivity events={game.state.events} />}
-      {respawning && <RespawnOverlay destroyedBy={coreDestroyer} />}
+      {respawning && <RespawnOverlay destroyedBy={coreDestroyer} selfDestructed={coreSelfDestructed} />}
       {!respawning && selected?.controlled && anchor && actionAvailability && !targetMode && !moveSelecting && <UnitActionDialog anchor={anchor} selected={selected} plan={plan} movementGoal={selected.id ? movementGoals[selected.id] : undefined} phase={game.phase} resources={game.state.resources} availability={actionAvailability} onClose={() => select(null)} onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }} onSweepTargeting={() => { setMoveSelecting(false); setTargetMode('SWEEP') }} onMoveTargeting={() => { setTargetMode(null); setMovementError(null); setMoveSelecting(true) }} onCancelMovementGoal={() => cancelMovementGoal(selected)} onUnitAction={unitAction} onCoreAction={coreAction} />}
       {targetMode && <div className="panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs text-coral-hostile">{targetMode === 'SWEEP' ? <Sword size={15} /> : <Crosshair size={15} />}<span>{t(targetMode === 'SWEEP' ? 'game.sweepHint' : 'game.targetHint')}</span><button onClick={() => setTargetMode(null)} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}
       {moveSelecting && <div className={`panel absolute left-1/2 top-28 z-30 flex -translate-x-1/2 items-center gap-2 rounded-full pl-4 pr-1.5 text-xs ${movementError ? 'text-coral-hostile' : 'text-cyan-signal'}`}><Move size={15} /><span>{t(movementError === 'UNKNOWN_DESTINATION' ? 'game.routeUnknown' : movementError ? 'game.routeBlocked' : 'game.moveHint')}</span><button onClick={() => { setMoveSelecting(false); setMovementError(null) }} className="focus-ring ml-1 min-h-11 rounded-full px-3 text-zinc-400 hover:bg-white/5 hover:text-white">{t('common.cancel')}</button></div>}

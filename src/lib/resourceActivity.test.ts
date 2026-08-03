@@ -2,6 +2,12 @@ import { describe, expect, it } from 'vitest'
 import { resourceActivityFromEvents } from './resourceActivity'
 
 describe('resourceActivityFromEvents', () => {
+  it('maps Core self-destruction to a Tick result', () => {
+    expect(resourceActivityFromEvents([{
+      event_id: 'core-self-destruct', tick: 9, event_type: 'CORE_DESTROYED', reason_code: 'SELF_DESTRUCT', position: [3, 4],
+    }])).toEqual([{ eventId: 'core-self-destruct', kind: 'CORE_SELF_DESTRUCT', position: [3, 4] }])
+  })
+
   it('maps upkeep deficit damage to excess Units', () => {
     expect(resourceActivityFromEvents([
       { event_id: 'damaged', tick: 9, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [7, 2], values: { damage: 1, hp: 3 } },

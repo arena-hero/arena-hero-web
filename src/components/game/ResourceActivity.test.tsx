@@ -7,6 +7,14 @@ import { ResourceActivity } from './ResourceActivity'
 describe('ResourceActivity', () => {
   afterEach(() => void i18n.changeLanguage('en'))
 
+  it('shows Core self-destruction at the resolved position', () => {
+    render(<ResourceActivity events={[{
+      event_id: 'core-self-destruct', tick: 8, event_type: 'CORE_DESTROYED', reason_code: 'SELF_DESTRUCT', position: [2, 3],
+    }]} />)
+    expect(screen.getByText('Core self-destructed. Its inventory and fleet were lost.')).toBeInTheDocument()
+    expect(screen.getByText('[2, 3]')).toBeInTheDocument()
+  })
+
   it('explains upkeep damage and destruction', () => {
     render(<ResourceActivity events={[
       { event_id: 'damaged', tick: 8, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [4, 5], values: { damage: 1, hp: 3 } },

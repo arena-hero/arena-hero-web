@@ -74,6 +74,21 @@ describe('UnitActionDialog', () => {
     confirm.mockRestore()
   })
 
+  it('offers Core self-destruct while normal or moving and uses the Core warning', async () => {
+    const user = userEvent.setup(); const onClose = vi.fn(); const onCoreAction = vi.fn()
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }
+    const view = render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={core} plan={plan} phase="open" resources={20} availability={{ actions: { SELF_DESTRUCT: true, REPAIR_SHIELD: true, START_MOVE: true, WAIT: true }, spawns: { WORKER: true, VANGUARD: true, RANGER: true } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={onCoreAction} />)
+    await user.click(screen.getByRole('button', { name: 'Self-destruct' }))
+    expect(confirm).toHaveBeenCalledWith(expect.stringContaining('entire fleet will be lost'))
+    expect(onCoreAction).toHaveBeenCalledWith({ type: 'SELF_DESTRUCT' })
+
+    const movingCore = { ...core, state: 'MOVING' as const, move_direction: 'RIGHT' as const, move_progress: 2, move_required_ticks: 4, destination: [2, 1] as [number, number] }
+    view.rerender(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={movingCore} plan={plan} phase="open" resources={20} availability={{ actions: { SELF_DESTRUCT: true, CANCEL_MOVE: true, WAIT: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={onCoreAction} />)
+    expect(screen.getByRole('button', { name: 'Self-destruct' })).toBeEnabled()
+    confirm.mockRestore()
+  })
+
   it('offers and immediately submits a relevant Beacon action', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onUnitAction = vi.fn()
     render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={selected} plan={plan} phase="open" resources={0} availability={{ actions: { MOVE: true, HARVEST: false, DEPOSIT: false, PICKUP_BEACON: true }, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }} onClose={onClose} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={onUnitAction} onCoreAction={() => undefined} />)

@@ -3,7 +3,7 @@ export type Direction = 'UP' | 'DOWN' | 'LEFT' | 'RIGHT'
 export type UnitType = 'WORKER' | 'VANGUARD' | 'RANGER'
 export type HarvestSource = 'RESOURCE_NODE' | 'DROPPED_CARGO'
 export type UnitActionType = 'MOVE' | 'HARVEST' | 'DEPOSIT' | 'SWEEP' | 'SHOOT' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'SELF_DESTRUCT' | 'HEAL' | 'WAIT'
-export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'HEAL' | 'WAIT'
+export type CoreActionType = 'SPAWN' | 'REPAIR_SHIELD' | 'START_MOVE' | 'CANCEL_MOVE' | 'PICKUP_BEACON' | 'DROP_BEACON' | 'SELF_DESTRUCT' | 'HEAL' | 'WAIT'
 
 export interface WorldObject {
   kind: 'OBSTACLE' | 'RESOURCE' | 'CORE' | 'UNIT'

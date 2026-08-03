@@ -21,4 +21,9 @@ describe('RespawnOverlay', () => {
     expect(screen.getByText('暂时找不到合法出生点，将在下一 Tick 重试……')).toBeInTheDocument()
     expect(screen.getByText('复活没有冷却；只要存在合法出生点，新的 Core 和 Worker 会立即部署。')).toBeInTheDocument()
   })
+
+  it('identifies a self-destruct while spawn placement is delayed', () => {
+    render(<RespawnOverlay destroyedBy={null} selfDestructed />)
+    expect(screen.getByText('Your Core self-destructed.')).toBeInTheDocument()
+  })
 })

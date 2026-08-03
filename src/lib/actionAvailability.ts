@@ -32,6 +32,7 @@ export function getActionAvailability(state: PlayerState, selected: WorldObject,
     const hasSpawnCapacity = projectedEntityCount(state, selected.position, plan) < MAX_ENTITIES_PER_CELL
     return {
       actions: {
+        SELF_DESTRUCT: true,
         HEAL: normal,
         REPAIR_SHIELD: normal,
         START_MOVE: normal && moveTargets(state, selected, plan).length > 0,

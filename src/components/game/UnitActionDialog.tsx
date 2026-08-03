@@ -37,7 +37,8 @@ export function UnitActionDialog(props: Props) {
     else actions = ['MOVE', 'SHOOT']
     if (props.availability.actions.DROP_BEACON) actions.push('DROP_BEACON')
     else if (props.availability.actions.PICKUP_BEACON) actions.push('PICKUP_BEACON')
-    if (props.selected.kind === 'UNIT') actions.push('HEAL', 'SELF_DESTRUCT')
+    if (props.selected.kind === 'UNIT') actions.push('HEAL')
+    actions.push('SELF_DESTRUCT')
     actions.push('WAIT')
     return actions
   }, [props.availability.actions.DROP_BEACON, props.availability.actions.PICKUP_BEACON, props.selected])
@@ -52,7 +53,7 @@ export function UnitActionDialog(props: Props) {
     if (type === 'MOVE' || type === 'START_MOVE') { props.onMoveTargeting(); return }
     if (type === 'SWEEP') { props.onSweepTargeting(); return }
     if (type === 'SHOOT') { props.onTargeting(); return }
-    if (type === 'SELF_DESTRUCT' && !window.confirm(t('game.confirmSelfDestruct'))) return
+    if (type === 'SELF_DESTRUCT' && !window.confirm(t(props.selected.kind === 'CORE' ? 'game.confirmCoreSelfDestruct' : 'game.confirmSelfDestruct'))) return
     if (props.selected.kind === 'CORE') props.onCoreAction({ type: type as CoreAction['type'] })
     else props.onUnitAction(props.selected.id, { type: type as UnitActionType })
     props.onClose()

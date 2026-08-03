@@ -13,7 +13,7 @@ const unitActionTypes = new Set([
 ])
 const coreActionTypes = new Set([
   'SPAWN', 'REPAIR_SHIELD', 'START_MOVE', 'CANCEL_MOVE',
-  'PICKUP_BEACON', 'DROP_BEACON', 'HEAL', 'WAIT',
+  'PICKUP_BEACON', 'DROP_BEACON', 'SELF_DESTRUCT', 'HEAL', 'WAIT',
 ])
 const directions = new Set(['UP', 'DOWN', 'LEFT', 'RIGHT'])
 const unitTypes = new Set(['WORKER', 'VANGUARD', 'RANGER'])
