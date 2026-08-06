@@ -6,7 +6,7 @@ import { positionKey } from './visibility'
 
 const unit: WorldObject = { kind: 'UNIT', id: 'unit', controlled: true, position: [0, 0], hp: 2, unit_type: 'WORKER' }
 const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
-const state = (objects: WorldObject[]): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, events: [], objects })
+const state = (objects: WorldObject[]): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, champion_beacon: { position: [99, 99] }, events: [], objects })
 const explored = (...positions: Position[]) => new Map<string, ExploredCell>(positions.map((position) => [positionKey(position), { position, kind: 'EMPTY' }]))
 
 describe('autonomous pathfinding', () => {

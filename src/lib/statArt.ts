@@ -1,7 +1,6 @@
 export const STAT_ICON_PATHS = {
   resources: '/assets/ui/icons/resource.png',
   population: '/assets/ui/icons/population.png',
-  upkeep: '/assets/ui/icons/upkeep.png',
 } as const
 
 export const PLAYER_STAT_ICON_PATHS = {

@@ -6,7 +6,6 @@ describe('stat art', () => {
     expect(STAT_ICON_PATHS).toEqual({
       resources: '/assets/ui/icons/resource.png',
       population: '/assets/ui/icons/population.png',
-      upkeep: '/assets/ui/icons/upkeep.png',
     })
   })
 

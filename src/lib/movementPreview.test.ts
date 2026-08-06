@@ -4,7 +4,7 @@ import type { PlayerState, WorldObject } from './types'
 
 const core: WorldObject = { kind: 'CORE', id: 'core', controlled: true, position: [0, 0], hp: 5, shield: 5, state: 'NORMAL' }
 const unit: WorldObject = { kind: 'UNIT', id: 'unit', controlled: true, position: [0, 0], hp: 2, unit_type: 'WORKER' }
-const state = (selected: WorldObject): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, events: [], objects: [selected, { kind: 'OBSTACLE', positions: [[0, -1]] }, { kind: 'RESOURCE', positions: [[1, 0]] }, { kind: 'UNIT', id: 'enemy', controlled: false, position: [-1, 0], hp: 2, unit_type: 'RANGER' }] })
+const state = (selected: WorldObject): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, champion_beacon: { position: [99, 99] }, events: [], objects: [selected, { kind: 'OBSTACLE', positions: [[0, -1]] }, { kind: 'RESOURCE', positions: [[1, 0]] }, { kind: 'UNIT', id: 'enemy', controlled: false, position: [-1, 0], hp: 2, unit_type: 'RANGER' }] })
 
 describe('movement preview', () => {
   it('lets units enter resources but excludes obstacles and enemy cells', () => expect(moveTargets(state(unit), unit)).toEqual([[1, 0], [0, 1]]))

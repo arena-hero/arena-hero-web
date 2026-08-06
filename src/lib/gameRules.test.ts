@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { PlayerState } from './types'
-import { coreResourceCapacity, visibleCoreShieldLimit } from './gameRules'
+import { coreResourceCapacity, unitCost, visibleCoreShieldLimit } from './gameRules'
 
 describe('coreResourceCapacity', () => {
   it('keeps a minimum of ten, then allows five resources per living Unit', () => {
@@ -11,9 +11,18 @@ describe('coreResourceCapacity', () => {
   })
 })
 
+describe('unitCost', () => {
+  it('uses exact 30% tiers and rounds halves up', () => {
+    expect(unitCost('WORKER', 19)).toBe(5)
+    expect(unitCost('WORKER', 20)).toBe(7)
+    expect(unitCost('VANGUARD', 25)).toBe(17)
+    expect(unitCost('RANGER', 100)).toBe(1038)
+  })
+})
+
 describe('visibleCoreShieldLimit', () => {
   const state = (carrierId?: string): PlayerState => ({
-    status: 'ACTIVE', resources: 0, population: 0, population_tier: 0, upkeep_next_tick: 0,
+    status: 'ACTIVE', resources: 0, population: 0,
     champion_beacon: carrierId ? { position: [0, 0], status: 'CARRIED', carrier_id: carrierId } : { position: [0, 0] },
     objects: [], events: [],
   })

@@ -318,6 +318,7 @@ export function TutorialPage({ preview = false }: { preview?: boolean }) {
         plan={plan}
         phase={phase}
         resources={state.resources}
+        population={state.population}
         availability={actionAvailability}
         onClose={() => setSelectedId(null)}
         onTargeting={() => { setMoveSelecting(false); setTargetMode('SHOOT') }}

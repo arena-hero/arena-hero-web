@@ -11,8 +11,6 @@ const game = vi.hoisted(() => ({
     status: 'ACTIVE' as const,
     resources: 8,
     population: 2,
-    population_tier: 0,
-    upkeep_next_tick: 0,
     champion_beacon: { position: [0, 0] as [number, number] },
     objects: [
       { kind: 'CORE' as const, id: 'core', controlled: true, position: [0, 0] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const },

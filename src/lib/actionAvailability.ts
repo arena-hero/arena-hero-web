@@ -15,8 +15,6 @@ export type UnavailableActionReason =
   | { code: 'NOT_AT_OWN_CORE' }
   | { code: 'CORE_MOVING' }
 
-export const UNIT_COST: Record<UnitType, number> = { WORKER: 5, VANGUARD: 10, RANGER: 12 }
-
 export function getActionAvailability(state: PlayerState, selected: WorldObject, plan?: CommandPlan): ActionAvailability {
   const unavailable: ActionAvailability = { actions: {}, spawns: { WORKER: false, VANGUARD: false, RANGER: false } }
   if (!selected.controlled || !selected.position) return unavailable

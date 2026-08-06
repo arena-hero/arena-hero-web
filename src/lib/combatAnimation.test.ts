@@ -4,7 +4,7 @@ import type { PlayerState } from './types'
 
 const state: PlayerState = {
   status: 'ACTIVE',
-  resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0,
+  resources: 0, population: 1,
   champion_beacon: { position: [99, 99] },
   objects: [{ kind: 'UNIT', id: 'vanguard', controlled: true, position: [2, 3], hp: 4, unit_type: 'VANGUARD' }],
   events: [{ event_id: 'event-7', tick: 7, event_type: 'SWEEP_RESOLVED', actor_id: 'vanguard', position: [3, 3] }],

@@ -50,45 +50,24 @@ interface HealFailureActivityItem {
   position: Position
 }
 
-interface UpkeepDamageActivityItem {
-  eventId: string
-  kind: 'UPKEEP_DAMAGE'
-  damage: number
-  hp: number
-  position: Position
-}
-
 interface CoreSelfDestructActivityItem {
   eventId: string
   kind: 'CORE_SELF_DESTRUCT'
   position: Position
 }
 
-export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem | HealActivityItem | HealFailureActivityItem | UpkeepDamageActivityItem | CoreSelfDestructActivityItem
+export type ResourceActivityItem = ResourceAmountActivityItem | ResourceCapturedActivityItem | ResourceFullActivityItem | DepositFailureActivityItem | HealActivityItem | HealFailureActivityItem | CoreSelfDestructActivityItem
 
 export function resourceActivityFromEvents(events: GameEvent[]): ResourceActivityItem[] {
   return events.flatMap<ResourceActivityItem>((event) => {
     if (!event.position) return []
     const capacity = event.values?.capacity
     const amount = event.values?.amount
-    const damage = event.values?.damage
     const hp = event.values?.hp
     const available = event.values?.available
     const destroyed = event.values?.destroyed
     if (event.event_type === 'CORE_DESTROYED' && event.reason_code === 'SELF_DESTRUCT') {
       return [{ eventId: event.event_id, kind: 'CORE_SELF_DESTRUCT', position: event.position }]
-    }
-    if (
-      event.event_type === 'UNIT_DAMAGED'
-      && event.reason_code === 'UPKEEP_DEFICIT'
-      && typeof damage === 'number'
-      && Number.isSafeInteger(damage)
-      && damage > 0
-      && typeof hp === 'number'
-      && Number.isSafeInteger(hp)
-      && hp >= 0
-    ) {
-      return [{ eventId: event.event_id, kind: 'UPKEEP_DAMAGE', damage, hp, position: event.position }]
     }
     if (
       event.event_type === 'CORE_RESOURCES_CAPTURED'

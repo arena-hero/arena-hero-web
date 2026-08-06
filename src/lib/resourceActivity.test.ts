@@ -8,16 +8,6 @@ describe('resourceActivityFromEvents', () => {
     }])).toEqual([{ eventId: 'core-self-destruct', kind: 'CORE_SELF_DESTRUCT', position: [3, 4] }])
   })
 
-  it('maps upkeep deficit damage to excess Units', () => {
-    expect(resourceActivityFromEvents([
-      { event_id: 'damaged', tick: 9, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [7, 2], values: { damage: 1, hp: 3 } },
-      { event_id: 'destroyed', tick: 9, event_type: 'UNIT_DAMAGED', reason_code: 'UPKEEP_DEFICIT', position: [8, 2], values: { damage: 2, hp: 0 } },
-    ])).toEqual([
-      { eventId: 'damaged', kind: 'UPKEEP_DAMAGE', damage: 1, hp: 3, position: [7, 2] },
-      { eventId: 'destroyed', kind: 'UPKEEP_DAMAGE', damage: 2, hp: 0, position: [8, 2] },
-    ])
-  })
-
   it('maps healing success and dynamic failures', () => {
     expect(resourceActivityFromEvents([
       { event_id: 'healed', tick: 9, event_type: 'UNIT_HEAL_SUCCEEDED', position: [0, 0], values: { amount: 2, hp: 4, cost: 2 } },

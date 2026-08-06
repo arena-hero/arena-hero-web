@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import type { PlayerState, WorldObject } from './types'
 import { getActionAvailability } from './actionAvailability'
 
-const state = (objects: WorldObject[], resources = 0): PlayerState => ({ status: 'ACTIVE', resources, population: objects.filter((object) => object.kind === 'UNIT' && object.controlled).length, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, objects, events: [] })
+const state = (objects: WorldObject[], resources = 0): PlayerState => ({ status: 'ACTIVE', resources, population: objects.filter((object) => object.kind === 'UNIT' && object.controlled).length, champion_beacon: { position: [99, 99] }, objects, events: [] })
 
 describe('getActionAvailability', () => {
   it('only lets an empty worker harvest on a resource point', () => {

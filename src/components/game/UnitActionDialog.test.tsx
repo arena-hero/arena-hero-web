@@ -107,6 +107,15 @@ describe('UnitActionDialog', () => {
     expect(screen.getByRole('button', { name: 'Ranger · 12 resources' })).toBeDisabled()
   })
 
+  it('shows dynamic production prices for the current population', () => {
+    const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }
+    render(<UnitActionDialog anchor={{ x: 100, y: 100, side: 'right' }} selected={core} plan={plan} phase="open" resources={20} population={20} availability={{ actions: { WAIT: true }, spawns: { WORKER: true, VANGUARD: true, RANGER: true } }} onClose={() => undefined} onTargeting={() => undefined} onSweepTargeting={() => undefined} onMoveTargeting={() => undefined} onUnitAction={() => undefined} onCoreAction={() => undefined} />)
+
+    expect(screen.getByRole('button', { name: 'Worker · 7 resources' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vanguard · 13 resources' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Ranger · 16 resources' })).toBeInTheDocument()
+  })
+
   it('submits a selected Core production order immediately', async () => {
     const user = userEvent.setup(); const onClose = vi.fn(); const onCoreAction = vi.fn()
     const core = { kind: 'CORE' as const, id: 'core', controlled: true, position: [1, 1] as [number, number], hp: 5, shield: 5, state: 'NORMAL' as const }

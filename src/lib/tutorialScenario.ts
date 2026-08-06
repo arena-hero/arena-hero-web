@@ -58,8 +58,6 @@ export function createTutorialState(step: number): PlayerState {
     status: 'ACTIVE',
     resources,
     population: vanguardSpawned ? 3 : 2,
-    population_tier: 0,
-    upkeep_next_tick: 0,
     champion_beacon: beaconCarried
       ? { position: TUTORIAL_POSITIONS.beacon, status: 'CARRIED', carrier_id: TUTORIAL_IDS.worker }
       : { position: TUTORIAL_POSITIONS.beacon, status: 'GROUND' },

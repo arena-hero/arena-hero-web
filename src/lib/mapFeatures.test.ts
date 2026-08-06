@@ -4,7 +4,7 @@ import { mapFeaturesAt } from './mapFeatures'
 import type { PlayerState } from './types'
 
 const state: PlayerState = {
-  status: 'ACTIVE', resources: 0, population: 0, population_tier: 0, upkeep_next_tick: 0, events: [],
+  status: 'ACTIVE', resources: 0, population: 0, events: [],
   champion_beacon: { position: [0, 0], status: 'GROUND' },
   objects: [
     { kind: 'RESOURCE', positions: [[2, 1]] },

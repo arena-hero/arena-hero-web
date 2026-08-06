@@ -6,8 +6,6 @@ export const demoState: PlayerState = {
   status: 'ACTIVE',
   resources: 28,
   population: 6,
-  population_tier: 0,
-  upkeep_next_tick: 0,
   champion_beacon: { position: [1, 0], status: 'CARRIED', carrier_id: id('3') },
   objects: [
     { kind: 'OBSTACLE', positions: [[-6,-4],[-6,-3],[-6,-2],[-2,-5],[-1,-5],[0,-5],[4,-3],[5,-3],[6,-3],[6,-2],[6,-1],[-4,4],[-3,4],[-2,4],[3,5],[4,5]] },

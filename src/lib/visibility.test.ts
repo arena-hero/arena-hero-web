@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { computeVisibility } from './visibility'
 import type { PlayerState } from './types'
 
-const base = (objects: PlayerState['objects']): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, population_tier: 0, upkeep_next_tick: 0, champion_beacon: { position: [99, 99] }, objects, events: [] })
+const base = (objects: PlayerState['objects']): PlayerState => ({ status: 'ACTIVE', resources: 0, population: 1, champion_beacon: { position: [99, 99] }, objects, events: [] })
 
 describe('computeVisibility', () => {
   it('uses the correct Manhattan radius for a worker', () => {

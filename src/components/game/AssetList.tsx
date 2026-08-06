@@ -4,13 +4,12 @@ import type { PlayerState, WorldObject } from '../../lib/types'
 import { Logo } from '../Logo'
 import { GameStats } from './GameStats'
 import { UnitArtIcon } from './UnitArtIcon'
-import { UpkeepWarning } from './UpkeepWarning'
 
 export function AssetList({ state, objects, selectedId, onSelect }: { state: PlayerState; objects: WorldObject[]; selectedId: string | null; onSelect: (object: WorldObject) => void }) {
   const { t } = useTranslation(); const controlled = useMemo(() => objects.filter((object) => object.controlled), [objects])
   return <aside className="panel-strong hidden h-full min-h-0 flex-col border-y-0 border-l-0 lg:flex">
     <div className="border-b border-white/[.07]">
-      <div className="px-5 py-4"><Logo /><GameStats state={state} className="mt-4" /><UpkeepWarning state={state} className="mt-2" /></div>
+      <div className="px-5 py-4"><Logo /><GameStats state={state} className="mt-4" /></div>
       <div className="flex min-h-10 items-center justify-between gap-3 border-t border-white/[.07] px-4 py-2">
         <h2 className="flex min-w-0 items-center gap-2">
           <span className="eyebrow shrink-0">FLEET INDEX</span>

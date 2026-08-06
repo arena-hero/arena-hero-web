@@ -1,7 +1,8 @@
 import { PackagePlus, Trash2, X } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { UNIT_COST, type ActionAvailability, type AvailableAction } from '../../lib/actionAvailability'
+import { type ActionAvailability, type AvailableAction } from '../../lib/actionAvailability'
+import { unitCost } from '../../lib/gameRules'
 import type { CommandPlan, CoreAction, Position, StreamPhase, UnitAction, UnitActionType, UnitType, WorldObject } from '../../lib/types'
 import { UnitArtIcon } from './UnitArtIcon'
 
@@ -14,6 +15,7 @@ interface Props {
   movementGoal?: Position
   phase: StreamPhase
   resources: number
+  population?: number
   availability: ActionAvailability
   onClose: () => void
   onTargeting: () => void
@@ -86,10 +88,11 @@ export function UnitActionDialog(props: Props) {
       </div>
       <div className="grid grid-cols-3 gap-2">{(['WORKER', 'VANGUARD', 'RANGER'] as UnitType[]).map((unit) => {
         const canSpawn = props.phase === 'open' && props.availability.spawns[unit]
-        return <button key={unit} aria-label={`${t(`game.units.${unit}`)} · ${t('game.unitCost', { cost: UNIT_COST[unit] })}`} onClick={() => spawn(unit)} disabled={!canSpawn} className="focus-ring min-h-16 rounded-gold border border-white/[.06] bg-white/[.025] px-1.5 py-2 hover:border-green-resource/25 hover:bg-green-resource/[.05] disabled:cursor-not-allowed disabled:border-white/[.045] disabled:bg-white/[.015]">
+        const cost = unitCost(unit, props.population ?? 0)
+        return <button key={unit} aria-label={`${t(`game.units.${unit}`)} · ${t('game.unitCost', { cost })}`} onClick={() => spawn(unit)} disabled={!canSpawn} className="focus-ring min-h-16 rounded-gold border border-white/[.06] bg-white/[.025] px-1.5 py-2 hover:border-green-resource/25 hover:bg-green-resource/[.05] disabled:cursor-not-allowed disabled:border-white/[.045] disabled:bg-white/[.015]">
           <UnitArtIcon type={unit} className={`mx-auto mb-1 size-6 ${canSpawn ? '' : 'opacity-30 grayscale'}`} />
           <span className={`block text-[10px] font-medium ${canSpawn ? 'text-zinc-200' : 'text-zinc-500'}`}>{t(`game.units.${unit}`)}</span>
-          <span className={`mt-1 block font-mono text-[9px] ${canSpawn ? 'text-green-resource' : 'text-zinc-600'}`}>{t('game.unitCost', { cost: UNIT_COST[unit] })}</span>
+          <span className={`mt-1 block font-mono text-[9px] ${canSpawn ? 'text-green-resource' : 'text-zinc-600'}`}>{t('game.unitCost', { cost })}</span>
         </button>
       })}</div>
     </section>}
